@@ -7,6 +7,8 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.graphics.Bitmap
+import android.os.Build
 import android.graphics.PixelFormat
 import android.os.IBinder
 import android.util.Log
@@ -19,7 +21,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
@@ -30,11 +34,17 @@ import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import dev.monet.app.MainActivity
 import dev.monet.app.MonetApp
 import dev.monet.app.R
+import dev.monet.app.core.network.AnnotateRequest
+import dev.monet.app.core.network.ApiException
+import dev.monet.app.core.network.Depth
 import dev.monet.app.core.settings.Settings
 import dev.monet.app.core.settings.ThemeMode
 import dev.monet.app.feature.lens.capture.ScreenCapturer
 import dev.monet.app.feature.lens.capture.ScreenTextRecognizer
+import dev.monet.app.feature.lens.capture.SelRect
 import dev.monet.app.feature.lens.capture.groupIntoBlocks
+import dev.monet.app.feature.lens.capture.realDisplaySize
+import dev.monet.app.feature.lens.capture.resolveSelection
 import dev.monet.app.ui.theme.MonetTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -42,6 +52,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /**
@@ -59,6 +70,11 @@ class LensService : Service() {
     private val recognizer by lazy { ScreenTextRecognizer() }
     private var readJob: Job? = null
     private var started = false
+
+    private var selectView: ComposeView? = null
+    private var selectFrame: Bitmap? = null
+    private var annotateJob: Job? = null
+    private var selection by mutableStateOf<SelectionUiState?>(null)
 
     private var expanded by mutableStateOf(false)
     private var rightSide by mutableStateOf(false)
@@ -118,6 +134,7 @@ class LensService : Service() {
 
     override fun onDestroy() {
         readJob?.cancel()
+        closeSelect()
         view?.let { runCatching { windowManager.removeView(it) } }
         view = null
         capturer?.release()
@@ -165,6 +182,136 @@ class LensService : Service() {
         }
     }
 
+    /** Freezes the current screen, runs OCR and lets the user pick text on it. */
+    private fun startSelect() {
+        val cap = capturer
+        if (cap == null) {
+            toast("Screen capture is not available. Turn the lens off and on again.")
+            return
+        }
+        if (readJob?.isActive == true || selectView != null) return
+        applyExpanded(false)
+        readJob = scope.launch {
+            val overlay = view
+            overlay?.visibility = View.INVISIBLE
+            delay(250)
+            val frame = cap.grabFrame()
+            if (frame == null) {
+                overlay?.visibility = View.VISIBLE
+                toast("Could not capture the screen.")
+                return@launch
+            }
+            val lines = try {
+                recognizer.recognize(frame)
+            } catch (e: Exception) {
+                Log.e(TAG, "OCR failed", e)
+                overlay?.visibility = View.VISIBLE
+                frame.recycle()
+                toast("Could not read the screen.")
+                return@launch
+            }
+            if (lines.isEmpty()) {
+                overlay?.visibility = View.VISIBLE
+                frame.recycle()
+                toast("No text found.")
+                return@launch
+            }
+            selectFrame = frame
+            selection = SelectionUiState(frame.asImageBitmap(), lines)
+            showSelectOverlay()
+        }
+    }
+
+    private fun showSelectOverlay() {
+        val actions = SelectActions(
+            onGesture = ::onSelectGesture,
+            onClose = ::closeSelect,
+            onDetails = ::openDetails,
+            onRetry = { selection?.result?.let { translateSelection(it.text) } },
+        )
+        // Exactly the display size (system bars included) so window pixels map 1:1 to frame pixels.
+        val (displayW, displayH) = realDisplaySize(this)
+        val selectParams = WindowManager.LayoutParams(
+            displayW,
+            displayH,
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+            PixelFormat.TRANSLUCENT,
+        ).apply {
+            gravity = Gravity.TOP or Gravity.START
+            if (Build.VERSION.SDK_INT >= 30) {
+                layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+            } else if (Build.VERSION.SDK_INT >= 28) {
+                layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+            }
+        }
+        val repo = (application as MonetApp).container.settingsRepository
+        val composeView = ComposeView(this).apply {
+            setViewTreeLifecycleOwner(owner)
+            setViewTreeSavedStateRegistryOwner(owner)
+            setViewTreeViewModelStoreOwner(owner)
+            setContent {
+                val settings by repo.settings.collectAsState(initial = Settings())
+                val dark = when (settings.themeMode) {
+                    ThemeMode.SYSTEM -> isSystemInDarkTheme()
+                    ThemeMode.LIGHT -> false
+                    ThemeMode.DARK -> true
+                }
+                MonetTheme(darkTheme = dark) {
+                    selection?.let { SelectOverlay(it, actions) }
+                }
+            }
+        }
+        selectView = composeView
+        windowManager.addView(composeView, selectParams)
+    }
+
+    private fun onSelectGesture(rect: SelRect) {
+        val current = selection ?: return
+        val result = resolveSelection(current.lines, rect, tapSizePx = px(48.dp)) ?: return
+        selection = current.copy(result = result, card = CardState.Loading)
+        translateSelection(result.text)
+    }
+
+    private fun translateSelection(text: String) {
+        annotateJob?.cancel()
+        selection = selection?.copy(card = CardState.Loading)
+        val container = (application as MonetApp).container
+        annotateJob = scope.launch {
+            val card = try {
+                val s = container.settingsRepository.settings.first()
+                // `fast` keeps the card quick; the Detail sheet asks for `full`.
+                CardState.Ready(container.api.annotate(AnnotateRequest(text = text, targetLang = s.targetLang, depth = Depth.FAST)))
+            } catch (e: ApiException) {
+                CardState.Failed(e.isOffline, e.problem?.detail ?: e.problem?.title ?: "Something went wrong")
+            }
+            selection = selection?.copy(card = card)
+        }
+    }
+
+    private fun openDetails() {
+        val text = selection?.result?.text ?: return
+        val intent = Intent(this, MainActivity::class.java)
+            .setAction(Intent.ACTION_SEND)
+            .setType("text/plain")
+            .putExtra(Intent.EXTRA_TEXT, text)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        startActivity(intent)
+        closeSelect()
+    }
+
+    private fun closeSelect() {
+        annotateJob?.cancel()
+        selectView?.let { runCatching { windowManager.removeView(it) } }
+        selectView = null
+        selection = null
+        selectFrame?.recycle()
+        selectFrame = null
+        view?.visibility = View.VISIBLE
+    }
+
     private fun toast(message: String) = Toast.makeText(this, message, Toast.LENGTH_LONG).show()
 
     private fun addOverlay() {
@@ -196,6 +343,7 @@ class LensService : Service() {
             },
             onLines = { n -> scope.launch { repo.setLinesPerStep(n) } },
             onRead = ::readScreen,
+            onSelect = ::startSelect,
         )
         val composeView = ComposeView(this).apply {
             setViewTreeLifecycleOwner(owner)
