@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     llm_api_key: str | None = None
     llm_base_url: str | None = None  # openai_compat only, e.g. https://api.groq.com/openai/v1
     llm_timeout_s: float = 30.0
+    llm_hedge_after_s: float | None = 5.0  # start the next model in parallel if the current one is this slow
     llm_temperature: float = 0.2
     llm_thinking_budget: int | None = 0  # gemini: 0 = no hidden reasoning (much faster); None = model default
 

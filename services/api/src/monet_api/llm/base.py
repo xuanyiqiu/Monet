@@ -7,6 +7,14 @@ class LLMError(Exception):
     """Provider failed (network, quota, invalid output). Callers degrade gracefully."""
 
 
+class LLMRateLimited(LLMError):
+    """Quota or rate limit hit (HTTP 429). Retrying the same model right away is pointless."""
+
+    def __init__(self, message: str, retry_after: float = 30.0) -> None:
+        super().__init__(message)
+        self.retry_after = retry_after
+
+
 class LLMProvider(Protocol):
     name: str
     model: str
