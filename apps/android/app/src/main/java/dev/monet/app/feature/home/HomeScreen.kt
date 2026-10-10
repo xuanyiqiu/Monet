@@ -1,5 +1,6 @@
 package dev.monet.app.feature.home
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -18,8 +19,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -35,7 +38,13 @@ import dev.monet.app.ui.theme.Radius
 import dev.monet.app.ui.theme.Spacing
 
 @Composable
-fun HomeScreen(onExplain: (String) -> Unit, onOpenSettings: () -> Unit, modifier: Modifier = Modifier) {
+fun HomeScreen(
+    onExplain: (String) -> Unit,
+    onOpenSettings: () -> Unit,
+    lensRunning: Boolean,
+    onToggleLens: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val c = Monet.colors
     val t = Monet.type
     var field by rememberSaveable { mutableStateOf("") }
@@ -97,13 +106,33 @@ fun HomeScreen(onExplain: (String) -> Unit, onOpenSettings: () -> Unit, modifier
         ) {
             Text("Explain", style = t.label)
         }
+        HorizontalDivider(color = c.hairline, modifier = Modifier.padding(vertical = Spacing.x2))
+        Text("LENS", style = t.label, color = c.inkMuted)
+        Text(
+            if (lensRunning) "The bubble is on. Tap it over any app to choose a mode."
+            else "Read what is on screen in any app, with a floating bubble.",
+            style = t.body,
+            color = c.inkMuted,
+        )
+        OutlinedButton(
+            onClick = onToggleLens,
+            shape = RoundedCornerShape(Radius.sm),
+            border = BorderStroke(1.dp, if (lensRunning) c.hairline else c.seal),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(
+                if (lensRunning) "Turn lens off" else "Turn lens on",
+                style = t.label,
+                color = if (lensRunning) c.ink else c.seal,
+            )
+        }
     }
 }
 
 @Preview(name = "Home light", showBackground = true, widthDp = 360, heightDp = 640)
 @Composable
-private fun HomeLight() = MonetTheme(darkTheme = false) { HomeScreen(onExplain = {}, onOpenSettings = {}) }
+private fun HomeLight() = MonetTheme(darkTheme = false) { HomeScreen(onExplain = {}, onOpenSettings = {}, lensRunning = false, onToggleLens = {}) }
 
 @Preview(name = "Home dark", showBackground = true, widthDp = 360, heightDp = 640, backgroundColor = 0xFF151412)
 @Composable
-private fun HomeDark() = MonetTheme(darkTheme = true) { HomeScreen(onExplain = {}, onOpenSettings = {}) }
+private fun HomeDark() = MonetTheme(darkTheme = true) { HomeScreen(onExplain = {}, onOpenSettings = {}, lensRunning = false, onToggleLens = {}) }
