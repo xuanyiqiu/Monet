@@ -36,15 +36,84 @@ class FakeMonetApi(private val latencyMs: Long = 250) : MonetApi {
 
     override suspend fun sendFeedback(request: FeedbackRequest) = Unit
 
-    override suspend fun listDocuments() = DocumentList(emptyList())
+    // ---- Documents: an in-memory library so the Library and Reader work offline ----
+
+    private val documents = mutableListOf<Document>()
+    private val documentText = mutableMapOf<String, String>()
+
+    init {
+        val id = "00000000-0000-4000-8000-000000000001"
+        val text = Samples.chengyu.text
+        documents += sampleDocument(id, "Sample reading", DocumentKind.TXT, text.length.toLong())
+        documentText[id] = text
+    }
+
+    private fun sampleDocument(id: String, title: String, kind: DocumentKind, size: Long) = Document(
+        id = id,
+        title = title,
+        kind = kind,
+        status = DocumentStatus.READY,
+        progress = 1.0,
+        pageCount = 1,
+        sizeBytes = size,
+        sourceLang = SourceLang.ZH,
+        targetLang = Lang.EN,
+        createdAt = "2026-10-10T10:00:00Z",
+        updatedAt = "2026-10-10T10:00:00Z",
+    )
+
+    override suspend fun listDocuments() = DocumentList(documents.sortedByDescending { it.createdAt })
 
     override suspend fun getDocument(id: String): Document =
-        throw ApiException(Problem(title = "Not Found", status = 404))
+        documents.firstOrNull { it.id == id } ?: throw ApiException(Problem(title = "Not Found", status = 404))
 
-    override suspend fun deleteDocument(id: String) = Unit
+    override suspend fun deleteDocument(id: String) {
+        documents.removeAll { it.id == id }
+        documentText.remove(id)
+    }
 
-    override suspend fun getDocumentPage(id: String, index: Int): DocumentPage =
-        throw ApiException(Problem(title = "Not Found", status = 404))
+    override suspend fun getDocumentPage(id: String, index: Int): DocumentPage {
+        getDocument(id)
+        if (index != 0) throw ApiException(Problem(title = "Not Found", status = 404))
+        val a = Samples.chengyu
+        val line = LineAnnotation(a.id, a.text, a.sourceLang, a.translation, a.tokens, a.expressions)
+        val b = Samples.meme
+        val line2 = LineAnnotation(b.id, b.text, b.sourceLang, b.translation, b.tokens, b.expressions)
+        return DocumentPage(
+            documentId = id,
+            index = 0,
+            blocks = listOf(
+                DocumentBlock("b0", lines = listOf(DocumentLine("l0", a.text, annotation = line))),
+                DocumentBlock("b1", lines = listOf(DocumentLine("l1", b.text, annotation = line2))),
+            ),
+        )
+    }
+
+    override suspend fun uploadDocument(
+        fileName: String,
+        mimeType: String,
+        bytes: ByteArray,
+        targetLang: Lang,
+        sourceLang: SourceLang,
+        title: String?,
+    ): Document {
+        delay(latencyMs)
+        val kind = when {
+            fileName.endsWith(".pdf", ignoreCase = true) -> DocumentKind.PDF
+            fileName.endsWith(".docx", ignoreCase = true) -> DocumentKind.DOCX
+            else -> DocumentKind.TXT
+        }
+        val doc = sampleDocument("00000000-0000-4000-8000-%012d".format(documents.size + 1), title ?: fileName.substringBeforeLast('.'), kind, bytes.size.toLong())
+            .copy(targetLang = targetLang, sourceLang = sourceLang)
+        documents += doc
+        documentText[doc.id] = bytes.decodeToString()
+        return doc
+    }
+
+    override suspend fun downloadDocument(id: String): ByteArray {
+        getDocument(id)
+        return (documentText[id] ?: "").encodeToByteArray()
+    }
 
     private fun generic(request: AnnotateRequest) = Annotation(
         id = "fake-${request.text.hashCode().toUInt()}",

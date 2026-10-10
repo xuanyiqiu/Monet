@@ -7,11 +7,15 @@ import kotlinx.coroutines.flow.update
 
 enum class LensMode { OFF, AUTO, SELECT }
 
+/** What the pill needs to show about the active reading pass. */
+data class ReadingProgress(val label: String, val hasPrev: Boolean, val hasNext: Boolean)
+
 data class LensUiState(
     val running: Boolean = false,
     val mode: LensMode = LensMode.AUTO,
     val linesPerStep: Int = 2,
     val lastRead: List<dev.monet.app.feature.lens.capture.TextBlock> = emptyList(),
+    val reading: ReadingProgress? = null,
 )
 
 /** Process-wide state shared by the overlay service and the app UI. */

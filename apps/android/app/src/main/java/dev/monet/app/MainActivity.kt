@@ -31,6 +31,9 @@ import dev.monet.app.core.settings.ThemeMode
 import dev.monet.app.feature.detail.DetailSheet
 import dev.monet.app.feature.home.HomeScreen
 import dev.monet.app.feature.home.MainViewModel
+import dev.monet.app.feature.home.Screen
+import dev.monet.app.feature.library.LibraryRoute
+import dev.monet.app.feature.reader.ReaderRoute
 import dev.monet.app.feature.home.incomingText
 import dev.monet.app.feature.settings.SettingsActions
 import dev.monet.app.feature.settings.SettingsScreen
@@ -95,13 +98,23 @@ class MainActivity : ComponentActivity() {
             }
             MonetTheme(darkTheme = dark) {
                 val sheetText by viewModel.sheetText.collectAsStateWithLifecycle()
-                val showSettings by viewModel.showSettings.collectAsStateWithLifecycle()
-                if (showSettings) {
-                    BackHandler(onBack = viewModel::closeSettings)
-                    SettingsScreen(
+                val screen by viewModel.screen.collectAsStateWithLifecycle()
+                BackHandler(enabled = screen != Screen.Home) { viewModel.back() }
+                when (val current = screen) {
+                    Screen.Home -> {
+                        val lens by LensState.state.collectAsStateWithLifecycle()
+                        HomeScreen(
+                            onExplain = viewModel::explain,
+                            onOpenSettings = { viewModel.open(Screen.Settings) },
+                            onOpenLibrary = { viewModel.open(Screen.Library) },
+                            lensRunning = lens.running,
+                            onToggleLens = ::toggleLens,
+                        )
+                    }
+                    Screen.Settings -> SettingsScreen(
                         settings = settings,
                         actions = SettingsActions(
-                            onBack = viewModel::closeSettings,
+                            onBack = { viewModel.back() },
                             onTargetLang = { settingsViewModel.setTargetLang(it) },
                             onPinyinStyle = { settingsViewModel.setPinyinStyle(it) },
                             onLinesPerStep = { settingsViewModel.setLinesPerStep(it) },
@@ -111,13 +124,14 @@ class MainActivity : ComponentActivity() {
                             onAuthToken = { settingsViewModel.setAuthToken(it) },
                         ),
                     )
-                } else {
-                    val lens by LensState.state.collectAsStateWithLifecycle()
-                    HomeScreen(
+                    Screen.Library -> LibraryRoute(
+                        onBack = { viewModel.back() },
+                        onOpen = { viewModel.open(Screen.Reader(it)) },
+                    )
+                    is Screen.Reader -> ReaderRoute(
+                        documentId = current.documentId,
+                        onBack = { viewModel.back() },
                         onExplain = viewModel::explain,
-                        onOpenSettings = viewModel::openSettings,
-                        lensRunning = lens.running,
-                        onToggleLens = ::toggleLens,
                     )
                 }
                 sheetText?.let { DetailSheet(text = it, onDismiss = viewModel::dismiss) }

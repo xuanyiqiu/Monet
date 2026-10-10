@@ -28,4 +28,15 @@ interface MonetApi {
     suspend fun getDocument(id: String): Document
     suspend fun deleteDocument(id: String)
     suspend fun getDocumentPage(id: String, index: Int): DocumentPage
+    suspend fun uploadDocument(
+        fileName: String,
+        mimeType: String,
+        bytes: ByteArray,
+        targetLang: Lang,
+        sourceLang: SourceLang = SourceLang.AUTO,
+        title: String? = null,
+    ): Document
+
+    /** The original uploaded file (a PDF is rendered on the device). */
+    suspend fun downloadDocument(id: String): ByteArray
 }

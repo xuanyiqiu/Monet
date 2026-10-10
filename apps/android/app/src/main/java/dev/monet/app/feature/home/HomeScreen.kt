@@ -41,6 +41,7 @@ import dev.monet.app.ui.theme.Spacing
 fun HomeScreen(
     onExplain: (String) -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenLibrary: () -> Unit,
     lensRunning: Boolean,
     onToggleLens: () -> Unit,
     modifier: Modifier = Modifier,
@@ -107,6 +108,17 @@ fun HomeScreen(
             Text("Explain", style = t.label)
         }
         HorizontalDivider(color = c.hairline, modifier = Modifier.padding(vertical = Spacing.x2))
+        Text("DOCUMENTS", style = t.label, color = c.inkMuted)
+        Text("Read PDFs, Word files and text files with translations.", style = t.body, color = c.inkMuted)
+        OutlinedButton(
+            onClick = onOpenLibrary,
+            shape = RoundedCornerShape(Radius.sm),
+            border = BorderStroke(1.dp, c.seal),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text("Open library", style = t.label, color = c.seal)
+        }
+        HorizontalDivider(color = c.hairline, modifier = Modifier.padding(vertical = Spacing.x2))
         Text("LENS", style = t.label, color = c.inkMuted)
         Text(
             if (lensRunning) "The bubble is on. Tap it over any app to choose a mode."
@@ -131,8 +143,8 @@ fun HomeScreen(
 
 @Preview(name = "Home light", showBackground = true, widthDp = 360, heightDp = 640)
 @Composable
-private fun HomeLight() = MonetTheme(darkTheme = false) { HomeScreen(onExplain = {}, onOpenSettings = {}, lensRunning = false, onToggleLens = {}) }
+private fun HomeLight() = MonetTheme(darkTheme = false) { HomeScreen(onExplain = {}, onOpenSettings = {}, onOpenLibrary = {}, lensRunning = false, onToggleLens = {}) }
 
 @Preview(name = "Home dark", showBackground = true, widthDp = 360, heightDp = 640, backgroundColor = 0xFF151412)
 @Composable
-private fun HomeDark() = MonetTheme(darkTheme = true) { HomeScreen(onExplain = {}, onOpenSettings = {}, lensRunning = false, onToggleLens = {}) }
+private fun HomeDark() = MonetTheme(darkTheme = true) { HomeScreen(onExplain = {}, onOpenSettings = {}, onOpenLibrary = {}, lensRunning = false, onToggleLens = {}) }

@@ -5,13 +5,20 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.ResponseBody
 import retrofit2.HttpException
 import retrofit2.Retrofit
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.POST
+import retrofit2.http.Part
+import retrofit2.http.Streaming
 import retrofit2.http.Path
 
 internal interface MonetService {
@@ -23,6 +30,19 @@ internal interface MonetService {
     @GET("v1/documents") suspend fun listDocuments(): DocumentList
     @GET("v1/documents/{id}") suspend fun getDocument(@Path("id") id: String): Document
     @DELETE("v1/documents/{id}") suspend fun deleteDocument(@Path("id") id: String)
+    @Multipart
+    @POST("v1/documents")
+    suspend fun uploadDocument(
+        @Part file: MultipartBody.Part,
+        @Part("target_lang") targetLang: RequestBody,
+        @Part("source_lang") sourceLang: RequestBody,
+        @Part("title") title: RequestBody?,
+    ): Document
+
+    @Streaming
+    @GET("v1/documents/{id}/file")
+    suspend fun getDocumentFile(@Path("id") id: String): ResponseBody
+
     @GET("v1/documents/{id}/pages/{index}")
     suspend fun getDocumentPage(@Path("id") id: String, @Path("index") index: Int): DocumentPage
 }
@@ -74,4 +94,29 @@ class RemoteMonetApi(
     override suspend fun getDocument(id: String) = call { service.getDocument(id) }
     override suspend fun deleteDocument(id: String) = call { service.deleteDocument(id) }
     override suspend fun getDocumentPage(id: String, index: Int) = call { service.getDocumentPage(id, index) }
+
+    override suspend fun uploadDocument(
+        fileName: String,
+        mimeType: String,
+        bytes: ByteArray,
+        targetLang: Lang,
+        sourceLang: SourceLang,
+        title: String?,
+    ) = call {
+        val text = "text/plain".toMediaType()
+        val file = MultipartBody.Part.createFormData("file", fileName, bytes.toRequestBody(mimeType.toMediaType()))
+        service.uploadDocument(
+            file = file,
+            targetLang = targetLang.wire().toRequestBody(text),
+            sourceLang = sourceLang.wire().toRequestBody(text),
+            title = title?.toRequestBody(text),
+        )
+    }
+
+    override suspend fun downloadDocument(id: String): ByteArray = call { service.getDocumentFile(id).use { it.bytes() } }
 }
+
+/** Wire value of an enum as declared by its @SerialName. */
+private fun Lang.wire() = name.lowercase()
+
+private fun SourceLang.wire() = name.lowercase()

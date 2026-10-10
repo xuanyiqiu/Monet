@@ -9,6 +9,7 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.graphics.Bitmap
 import android.os.Build
+import android.view.HapticFeedbackConstants
 import android.graphics.PixelFormat
 import android.os.IBinder
 import android.util.Log
@@ -34,14 +35,22 @@ import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import dev.monet.app.MainActivity
 import dev.monet.app.MonetApp
 import dev.monet.app.R
+import dev.monet.app.core.network.AnnotateLinesRequest
 import dev.monet.app.core.network.AnnotateRequest
+import dev.monet.app.core.network.AnnotationContext
+import dev.monet.app.core.network.LineInput
 import dev.monet.app.core.network.ApiException
 import dev.monet.app.core.network.Depth
 import dev.monet.app.core.settings.Settings
 import dev.monet.app.core.settings.ThemeMode
 import dev.monet.app.feature.lens.capture.ScreenCapturer
 import dev.monet.app.feature.lens.capture.ScreenTextRecognizer
+import dev.monet.app.feature.lens.capture.ReadingSession
 import dev.monet.app.feature.lens.capture.SelRect
+import dev.monet.app.feature.lens.capture.borderPixels
+import dev.monet.app.feature.lens.capture.buildReadingUnits
+import dev.monet.app.feature.lens.capture.medianArgb
+import dev.monet.app.feature.lens.capture.pickTextColor
 import dev.monet.app.feature.lens.capture.groupIntoBlocks
 import dev.monet.app.feature.lens.capture.realDisplaySize
 import dev.monet.app.feature.lens.capture.resolveSelection
@@ -75,6 +84,11 @@ class LensService : Service() {
     private var selectFrame: Bitmap? = null
     private var annotateJob: Job? = null
     private var selection by mutableStateOf<SelectionUiState?>(null)
+
+    private var bandView: ComposeView? = null
+    private var reading by mutableStateOf<ReadingUiState?>(null)
+    private val translationCache = mutableMapOf<String, ChipText>()
+    private val chipViews = mutableMapOf<String, ComposeView>()
 
     private var expanded by mutableStateOf(false)
     private var rightSide by mutableStateOf(false)
@@ -127,7 +141,16 @@ class LensService : Service() {
         LensState.update { it.copy(running = true, mode = LensMode.AUTO) }
         val repo = (application as MonetApp).container.settingsRepository
         scope.launch {
-            repo.settings.collect { s -> LensState.update { it.copy(linesPerStep = s.linesPerStep) } }
+            repo.settings.collect { s ->
+                LensState.update { it.copy(linesPerStep = s.linesPerStep) }
+                reading?.let { r ->
+                    if (r.session.linesPerStep != s.linesPerStep) {
+                        reading = r.copy(session = r.session.withLinesPerStep(s.linesPerStep))
+                        publishReading()
+                        requestTranslations()
+                    }
+                }
+            }
         }
         return START_NOT_STICKY
     }
@@ -135,6 +158,7 @@ class LensService : Service() {
     override fun onDestroy() {
         readJob?.cancel()
         closeSelect()
+        stopReading()
         view?.let { runCatching { windowManager.removeView(it) } }
         view = null
         capturer?.release()
@@ -146,21 +170,30 @@ class LensService : Service() {
         super.onDestroy()
     }
 
-    /** Captures the screen without our own bubble in it, runs OCR and publishes the grouped blocks. */
-    private fun readScreen() {
+    /**
+     * Auto mode: captures the screen (without our own windows), groups the text into units and
+     * starts a reading pass. Translations arrive per step and are cached by source text.
+     */
+    private fun startReading() {
         val cap = capturer
         if (cap == null) {
             toast("Screen capture is not available. Turn the lens off and on again.")
             return
         }
-        if (readJob?.isActive == true) return
+        if (readJob?.isActive == true || selectView != null) return
+        applyExpanded(false)
         readJob = scope.launch {
             val overlay = view
+            val band = bandView
             overlay?.visibility = View.INVISIBLE
-            // Hiding the bubble forces a fresh frame, which also covers a static screen.
+            band?.visibility = View.INVISIBLE
+            chipViews.values.forEach { it.visibility = View.INVISIBLE }
+            // Hiding our windows forces a fresh frame, which also covers a static screen.
             delay(250)
             val frame = cap.grabFrame()
             overlay?.visibility = View.VISIBLE
+            band?.visibility = View.VISIBLE
+            chipViews.values.forEach { it.visibility = View.VISIBLE }
             if (frame == null) {
                 toast("Could not capture the screen.")
                 return@launch
@@ -168,17 +201,198 @@ class LensService : Service() {
             try {
                 val blocks = groupIntoBlocks(recognizer.recognize(frame))
                 LensState.update { it.copy(lastRead = blocks) }
-                Log.i(TAG, "Read ${blocks.size} blocks: ${blocks.joinToString(" | ") { it.text }}")
-                toast(
-                    if (blocks.isEmpty()) "No text found." else
-                        "Read ${blocks.size} blocks: " + blocks.take(3).joinToString(" | ") { it.text.take(40) },
-                )
+                // System bars are not page content; skip text recognized inside them.
+                val units = buildReadingUnits(blocks.filter { it.top >= systemBarTopPx() && it.bottom <= frame.height - systemBarBottomPx() })
+                if (units.isEmpty()) {
+                    toast("No text found.")
+                    return@launch
+                }
+                val styles = units.associate { u ->
+                    val bg = medianArgb(borderPixels(frame.width, frame.height, u.bounds) { x, y -> frame.getPixel(x, y) })
+                    u.id to ChipStyle(bg, pickTextColor(bg))
+                }
+                val settings = (application as MonetApp).container.settingsRepository.settings.first()
+                clearChips()
+                reading = ReadingUiState(ReadingSession(units, settings.linesPerStep), styles, emptyMap())
+                showBand()
+                publishReading()
+                requestTranslations()
             } catch (e: Exception) {
                 Log.e(TAG, "OCR failed", e)
                 toast("Could not read the screen.")
             } finally {
                 frame.recycle()
             }
+        }
+    }
+
+    private fun stepReading(forward: Boolean) {
+        val r = reading ?: return
+        reading = r.copy(session = if (forward) r.session.next() else r.session.prev())
+        view?.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+        publishReading()
+        requestTranslations()
+    }
+
+    private fun stopReading() {
+        clearChips()
+        bandView?.let { runCatching { windowManager.removeView(it) } }
+        bandView = null
+        reading = null
+        LensState.update { it.copy(reading = null) }
+    }
+
+    /** Keeps the pill (progress, enabled buttons) and the chips in sync with the session. */
+    private fun publishReading() {
+        val r = reading
+        LensState.update {
+            it.copy(
+                reading = r?.session?.let { s -> ReadingProgress(s.label, s.hasPrev, s.hasNext) },
+            )
+        }
+        if (r != null) {
+            reading = r.copy(
+                translations = r.session.active.associate { u -> u.id to (translationCache[u.text] ?: ChipText.Loading) },
+            )
+        }
+        syncChips()
+    }
+
+    /**
+     * One touchable window per active unit. Touchable windows are not subject to the 0.8 opacity
+     * cap Android 12+ puts on non-touchable overlays, so the chip fully covers the source text.
+     */
+    private fun syncChips() {
+        val r = reading
+        val activeUnits = r?.session?.active.orEmpty()
+        val ids = activeUnits.map { it.id }.toSet()
+        chipViews.keys.filter { it !in ids }.forEach { id ->
+            chipViews.remove(id)?.let { runCatching { windowManager.removeView(it) } }
+        }
+        if (r == null) return
+        val displayW = realDisplaySize(this).first
+        var added = false
+        activeUnits.forEach { unit ->
+            if (unit.id in chipViews) return@forEach
+            val style = r.styles[unit.id] ?: return@forEach
+            val chipParams = WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                PixelFormat.TRANSLUCENT,
+            ).apply {
+                gravity = Gravity.TOP or Gravity.START
+                x = unit.bounds.left - CHIP_INFLATE_PX
+                y = unit.bounds.top - CHIP_INFLATE_PX
+                if (Build.VERSION.SDK_INT >= 30) {
+                    layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+                } else if (Build.VERSION.SDK_INT >= 28) {
+                    layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                }
+            }
+            val chipView = ComposeView(this).apply {
+                setViewTreeLifecycleOwner(owner)
+                setViewTreeSavedStateRegistryOwner(owner)
+                setViewTreeViewModelStoreOwner(owner)
+                setContent {
+                    MonetTheme(darkTheme = false) {
+                        ReadingChip(unit, style, reading?.translations?.get(unit.id) ?: ChipText.Loading, displayW)
+                    }
+                }
+            }
+            chipViews[unit.id] = chipView
+            windowManager.addView(chipView, chipParams)
+            added = true
+        }
+        // The bubble must stay above the chips so it remains reachable.
+        if (added) view?.let {
+            windowManager.removeView(it)
+            windowManager.addView(it, params)
+        }
+    }
+
+    private fun clearChips() {
+        chipViews.values.forEach { runCatching { windowManager.removeView(it) } }
+        chipViews.clear()
+    }
+
+    /** One request covers the active step plus the next one, so Next is usually instant. */
+    private fun requestTranslations() {
+        val r = reading ?: return
+        val wanted = (r.session.active + r.session.upcoming()).filter {
+            val cached = translationCache[it.text]
+            cached == null || cached is ChipText.Unavailable
+        }
+        if (wanted.isEmpty()) return
+        wanted.forEach { translationCache[it.text] = ChipText.Loading }
+        publishReading()
+        val container = (application as MonetApp).container
+        scope.launch {
+            try {
+                val s = container.settingsRepository.settings.first()
+                val context = r.session.units.joinToString(" ") { it.text }.take(1_800)
+                val response = container.api.annotateLines(
+                    AnnotateLinesRequest(
+                        lines = wanted.map { LineInput(it.id, it.text.take(500)) },
+                        targetLang = s.targetLang,
+                        context = AnnotationContext(surrounding = context),
+                    ),
+                )
+                val byId = wanted.associateBy { it.id }
+                response.lines.forEach { line ->
+                    val unit = byId[line.id] ?: return@forEach
+                    translationCache[unit.text] =
+                        if (line.translation.isEmpty()) ChipText.Unavailable(null) else ChipText.Text(line.translation)
+                }
+                // Anything the server skipped must not stay "loading" forever.
+                wanted.forEach { if (translationCache[it.text] == ChipText.Loading) translationCache[it.text] = ChipText.Unavailable(null) }
+            } catch (e: ApiException) {
+                val note = if (e.isOffline) "Can't reach the server." else e.problem?.title
+                wanted.forEach { translationCache[it.text] = ChipText.Unavailable(note) }
+            }
+            publishReading()
+        }
+    }
+
+    private fun showBand() {
+        bandView?.let { runCatching { windowManager.removeView(it) } }
+        val (displayW, displayH) = realDisplaySize(this)
+        val bandParams = WindowManager.LayoutParams(
+            displayW,
+            displayH,
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
+                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+            PixelFormat.TRANSLUCENT,
+        ).apply {
+            gravity = Gravity.TOP or Gravity.START
+            if (Build.VERSION.SDK_INT >= 30) {
+                layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+            } else if (Build.VERSION.SDK_INT >= 28) {
+                layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+            }
+        }
+        val composeView = ComposeView(this).apply {
+            setViewTreeLifecycleOwner(owner)
+            setViewTreeSavedStateRegistryOwner(owner)
+            setViewTreeViewModelStoreOwner(owner)
+            setContent {
+                MonetTheme(darkTheme = false) {
+                    reading?.let { ReadingBand(it) }
+                }
+            }
+        }
+        bandView = composeView
+        windowManager.addView(composeView, bandParams)
+        // The bubble must stay above the band so it remains reachable.
+        view?.let {
+            windowManager.removeView(it)
+            windowManager.addView(it, params)
         }
     }
 
@@ -190,6 +404,7 @@ class LensService : Service() {
             return
         }
         if (readJob?.isActive == true || selectView != null) return
+        stopReading()
         applyExpanded(false)
         readJob = scope.launch {
             val overlay = view
@@ -300,6 +515,7 @@ class LensService : Service() {
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
         startActivity(intent)
         closeSelect()
+        stopReading()
     }
 
     private fun closeSelect() {
@@ -339,11 +555,19 @@ class LensService : Service() {
             onDrag = { x, y -> dragTo(params.x + x, params.y + y) },
             onDragEnd = ::snap,
             onMode = { mode ->
-                if (mode == LensMode.OFF) stopSelf() else LensState.update { it.copy(mode = mode) }
+                if (mode == LensMode.OFF) {
+                    stopSelf()
+                } else {
+                    if (mode == LensMode.SELECT) stopReading()
+                    LensState.update { it.copy(mode = mode) }
+                }
             },
             onLines = { n -> scope.launch { repo.setLinesPerStep(n) } },
-            onRead = ::readScreen,
+            onRead = ::startReading,
             onSelect = ::startSelect,
+            onPrev = { stepReading(forward = false) },
+            onNext = { stepReading(forward = true) },
+            onStopReading = ::stopReading,
         )
         val composeView = ComposeView(this).apply {
             setViewTreeLifecycleOwner(owner)
@@ -418,4 +642,13 @@ class LensService : Service() {
         const val EXTRA_RESULT_CODE = "dev.monet.app.lens.RESULT_CODE"
         const val EXTRA_RESULT_DATA = "dev.monet.app.lens.RESULT_DATA"
     }
+}
+
+private fun Service.systemBarTopPx(): Int = systemDimenPx("status_bar_height")
+
+private fun Service.systemBarBottomPx(): Int = systemDimenPx("navigation_bar_height")
+
+private fun Service.systemDimenPx(name: String): Int {
+    val id = resources.getIdentifier(name, "dimen", "android")
+    return if (id > 0) resources.getDimensionPixelSize(id) else 0
 }
