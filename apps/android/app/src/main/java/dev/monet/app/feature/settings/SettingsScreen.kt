@@ -60,6 +60,7 @@ class SettingsActions(
     val onUseFakeApi: (Boolean) -> Unit,
     val onApiBaseUrl: (String) -> Unit,
     val onAuthToken: (String) -> Unit,
+    val onReplayIntro: () -> Unit,
 )
 
 @Composable
@@ -132,6 +133,9 @@ fun SettingsScreen(settings: Settings, actions: SettingsActions, modifier: Modif
             if (!settings.useFakeApi) {
                 CommitField("Server URL", settings.apiBaseUrl, actions.onApiBaseUrl)
                 CommitField("Access token", settings.authToken, actions.onAuthToken)
+            }
+            TextButton(onClick = actions.onReplayIntro) {
+                Text("Replay introduction", style = t.label, color = c.seal)
             }
         }
     }
@@ -216,7 +220,7 @@ private fun CommitField(label: String, value: String, onCommit: (String) -> Unit
     )
 }
 
-private val previewActions = SettingsActions({}, {}, {}, {}, {}, {}, {}, {})
+private val previewActions = SettingsActions({}, {}, {}, {}, {}, {}, {}, {}, {})
 
 @Preview(name = "Settings light", showBackground = true, widthDp = 360, heightDp = 780)
 @Composable

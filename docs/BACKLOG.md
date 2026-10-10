@@ -33,7 +33,7 @@ Legend: `[ ]` todo · `[~] (branch)` in progress · `[x]` done. Work top-down wi
 - [x] F-08 Select mode: freeze frame, drag selection, translate selection card. AC: works end-to-end against local API.
 - [x] F-09 Auto mode + reading band (N lines per step, next/prev, dim read lines). AC: logic unit-tested; screenshot.
 - [x] F-10 Library + Reader (PdfRenderer + overlay from pages endpoint, reflow reader for docx/txt).
-- [~] (feat/android) F-11 Onboarding.
+- [x] F-11 Onboarding.
 
 ## Later
 - Notebook + spaced repetition, accounts sync, offline pinyin, EPUB/images, scanned-PDF OCR.
