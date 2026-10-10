@@ -17,7 +17,11 @@ def build_provider(s: Settings) -> LLMProvider:
             )
             for m in models
         ]
-        return FallbackProvider(providers) if len(providers) > 1 else providers[0]
+        return (
+            FallbackProvider(providers, hedge_after_s=s.llm_hedge_after_s)
+            if len(providers) > 1
+            else providers[0]
+        )
     if s.llm_provider == "openai_compat":
         if not s.llm_base_url:
             raise ValueError("MONET_LLM_BASE_URL is required for the openai_compat provider")
