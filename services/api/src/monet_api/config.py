@@ -25,11 +25,15 @@ class Settings(BaseSettings):
 
     # LLM
     llm_provider: Literal["fake", "gemini", "openai_compat"] = "fake"
-    llm_model: str = "gemini-2.5-flash"
+    llm_model: str = "gemini-3.5-flash"
+    llm_fallback_models: list[str] = Field(
+        default_factory=lambda: ["gemini-3.1-flash-lite", "gemini-3.8-flash"]
+    )
     llm_api_key: str | None = None
     llm_base_url: str | None = None  # openai_compat only, e.g. https://api.groq.com/openai/v1
     llm_timeout_s: float = 30.0
     llm_temperature: float = 0.2
+    llm_thinking_budget: int | None = 0  # gemini: 0 = no hidden reasoning (much faster); None = model default
 
     # Storage
     database_url: str | None = None  # postgresql+asyncpg://monet:monet@localhost:54329/monet

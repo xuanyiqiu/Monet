@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Monet Playground</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Serif+SC:wght@500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper:#F7F4EE; --surface:#FFFDF9; --sunken:#EFEBE3; --ink:#1B1A17; --muted:#5E5A52; --faint:#9A958B;
+    --hair:rgba(27,26,23,.10); --seal:#C8402B; --seal-soft:rgba(200,64,43,.10); --indigo:#2F4A7A;
+    --t1:#C8402B; --t2:#B9822E; --t3:#3C7A4E; --t4:#2F4A7A; --t5:#9A958B;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:#151412; --surface:#1E1C19; --sunken:#0F0E0C; --ink:#ECE8E1; --muted:#A39E94; --faint:#6B665D;
+      --hair:rgba(236,232,225,.12); --seal:#E06A52; --seal-soft:rgba(224,106,82,.16); --indigo:#8CA6D8;
+      --t1:#E06A52; --t2:#D9A75A; --t3:#7DBF8E; --t4:#8CA6D8;
+    }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font:16px/24px "IBM Plex Sans", system-ui, sans-serif; }
+  main { max-width:760px; margin:0 auto; padding:32px 20px 64px; }
+  h1 { font:600 28px/34px "Source Serif 4", Georgia, serif; margin:0 0 4px; }
+  .sub { color:var(--muted); margin:0 0 24px; }
+  textarea { width:100%; min-height:110px; resize:vertical; padding:12px; border:1px solid var(--hair); border-radius:8px;
+    background:var(--sunken); color:var(--ink); font:18px/28px "Noto Serif SC","Source Serif 4",serif; }
+  .row { display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin:12px 0 0; }
+  select, button { font:500 13px/18px "IBM Plex Sans",sans-serif; letter-spacing:.2px; border-radius:8px; padding:8px 12px;
+    border:1px solid var(--hair); background:var(--surface); color:var(--ink); }
+  button.primary { background:var(--seal); border-color:var(--seal); color:#fff; cursor:pointer; }
+  button:disabled { opacity:.5; }
+  .samples { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+  .samples button { cursor:pointer; color:var(--muted); }
+  .sheet { margin-top:28px; background:var(--surface); border:1px solid var(--hair); border-radius:12px; padding:20px; }
+  .label { font:500 12px/16px "IBM Plex Sans",sans-serif; letter-spacing:.8px; text-transform:uppercase; color:var(--muted); margin:0 0 10px; }
+  section + section { border-top:1px solid var(--hair); margin-top:20px; padding-top:20px; }
+  .translation { font:400 20px/30px "Source Serif 4",Georgia,serif; margin:0; }
+  .note { color:var(--muted); font-size:14px; margin:8px 0 0; }
+  .tokens { display:flex; flex-wrap:wrap; gap:6px 4px; align-items:flex-end; }
+  .tok { display:flex; flex-direction:column; align-items:center; padding:2px 3px; border-radius:4px; min-width:14px; }
+  .tok .py { font:500 11px/14px "IBM Plex Sans",sans-serif; min-height:14px; }
+  .tok .src { font:500 24px/34px "Noto Serif SC","Source Serif 4",serif; }
+  .tok .gl { margin-top:8px; font:400 12px/16px "IBM Plex Sans",sans-serif; color:var(--muted); max-width:120px; text-align:center; }
+  .tok .ipa { font:italic 400 12px/16px "IBM Plex Sans",sans-serif; color:var(--muted); }
+  .tok.u-idiom .src { text-decoration:underline dotted var(--indigo) 1.5px; text-underline-offset:6px; }
+  .tok.u-meme .src { text-decoration:underline wavy var(--seal) 1.5px; text-underline-offset:6px; }
+  .tone1{color:var(--t1)} .tone2{color:var(--t2)} .tone3{color:var(--t3)} .tone4{color:var(--t4)} .tone5{color:var(--t5)}
+  .card { border:1px solid var(--hair); border-radius:12px; padding:14px 16px; margin-top:12px; }
+  .card h3 { margin:0; font:500 22px/30px "Noto Serif SC","Source Serif 4",serif; display:flex; gap:10px; align-items:baseline; flex-wrap:wrap; }
+  .tag { font:500 12px/16px "IBM Plex Sans",sans-serif; letter-spacing:.4px; border:1px solid var(--hair); border-radius:4px; padding:1px 6px; color:var(--muted); }
+  .card .py { font:400 13px/18px "IBM Plex Sans",sans-serif; color:var(--muted); }
+  .lm { font:400 18px/28px "Source Serif 4",Georgia,serif; margin:8px 0; }
+  .lm .arrow { color:var(--faint); padding:0 6px; }
+  dl { display:grid; grid-template-columns:max-content 1fr; gap:4px 14px; margin:0; font-size:14px; }
+  dt { color:var(--muted); } dd { margin:0; }
+  .conf { color:var(--muted); font-size:13px; margin-top:8px; }
+  .err { color:var(--seal); margin-top:16px; }
+  .meta { color:var(--faint); font-size:12px; margin-top:16px; }
+  .empty { color:var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Monet</h1>
+  <p class="sub">Paste text from anywhere. See what it means, how it sounds, and why it says it.</p>
+  <textarea id="text" spellcheck="false">家人们谁懂啊，老板又在画大饼，我直接蚌埠住了</textarea>
+  <div class="row">
+    <label>From <select id="src"><option value="auto">Auto</option><option value="zh">中文</option><option value="es">Español</option><option value="en">English</option></select></label>
+    <label>To <select id="tgt"><option value="en">English</option><option value="es">Español</option><option value="zh">中文</option></select></label>
+    <label>Pinyin <select id="pystyle"><option value="color">Tone colors</option><option value="plain">Plain</option><option value="off">Hidden</option></select></label>
+    <button class="primary" id="go">Explain</button>
+  </div>
+  <div class="samples" id="samples"></div>
+  <div id="out"></div>
+</main>
+<script>
+const SAMPLES = [
+  "这家店真的绝绝子，yyds！", "他说话简直是对牛弹琴", "外甥打灯笼——照舅", "这个卖666元，太宰人了",
+  "Hoy está en las nubes, no tiene pelos en la lengua", "She spilled the tea, no cap. Go touch grass.",
+];
+const $ = (id) => document.getElementById(id);
+const esc = (s) => (s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const IDIOM = new Set(["chengyu", "idiom", "proverb", "xiehouyu", "classical"]);
+const KIND = { chengyu: "成语", xiehouyu: "歇后语", meme: "meme", slang: "slang", wordplay: "wordplay",
+  idiom: "idiom", proverb: "proverb", classical: "classical", other: "expression" };
+
+for (const s of SAMPLES) {
+  const b = document.createElement("button"); b.textContent = s;
+  b.onclick = () => { $("text").value = s; run(); };
+  $("samples").append(b);
+}
+
+function pinyinHtml(tok) {
+  const style = $("pystyle").value;
+  if (style === "off" || !tok.pinyin) return "";
+  if (style === "plain") return esc(tok.pinyin);
+  const marks = tok.pinyin.split(" "), nums = (tok.pinyin_numbered || "").split(" ");
+  return marks.map((m, i) => `<span class="tone${(nums[i] || "").slice(-1) || 5}">${esc(m)}</span>`).join(" ");
+}
+
+function render(a) {
+  const under = new Map();
+  for (const e of a.expressions) for (let i = e.token_start; i < e.token_end; i++)
+    under.set(i, IDIOM.has(e.kind) ? "u-idiom" : "u-meme");
+  const toks = a.tokens.map((t, i) => t.kind === "space" ? `<div class="tok"><span class="src">&nbsp;</span></div>` :
+    `<div class="tok ${under.get(i) || ""}"><span class="py">${pinyinHtml(t)}</span><span class="src">${esc(t.text)}</span>` +
+    (t.ipa ? `<span class="ipa">/${esc(t.ipa)}/</span>` : "") + (t.gloss ? `<span class="gl">${esc(t.gloss)}</span>` : "") + `</div>`).join("");
+  const cards = a.expressions.map((e) => `
+    <div class="card">
+      <h3>${esc(e.text)} <span class="tag">${KIND[e.kind] || e.kind}</span></h3>
+      ${e.pinyin ? `<div class="py">${esc(e.pinyin)}</div>` : ""}
+      <p class="lm">${e.literal ? `${esc(e.literal)}<span class="arrow">→</span>` : ""}${esc(e.meaning)}</p>
+      <dl>
+        ${e.origin ? `<dt>Origin</dt><dd>${esc(e.origin)}</dd>` : ""}
+        ${e.register ? `<dt>Tone</dt><dd>${esc(e.register)}</dd>` : ""}
+        ${e.equivalent ? `<dt>Closest</dt><dd>${esc(e.equivalent)}</dd>` : ""}
+      </dl>
+      <div class="conf">${e.source === "model" ? "likely" : "✓ dictionary"} · ${Math.round(e.confidence * 100)}%</div>
+    </div>`).join("");
+  $("out").innerHTML = `
+    <div class="sheet">
+      <section><p class="label">Meaning</p>
+        <p class="translation">${a.translation ? esc(a.translation) : '<span class="empty">Translation unavailable</span>'}</p>
+        ${a.note ? `<p class="note">${esc(a.note)}</p>` : ""}</section>
+      <section><p class="label">Breakdown</p><div class="tokens">${toks}</div></section>
+      <section><p class="label">Why it says that</p>${cards || '<p class="empty">Nothing special here: plain language.</p>'}</section>
+      <div class="meta">${a.source_lang} → ${a.target_lang} · ${a.cached ? "cached" : "fresh"} · id ${a.id.slice(0, 8)}</div>
+    </div>`;
+}
+
+let last = null;
+async function run() {
+  $("go").disabled = true; $("go").textContent = "Explaining…";
+  try {
+    const r = await fetch("/v1/annotate", {
+      method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer dev:playground" },
+      body: JSON.stringify({ text: $("text").value, source_lang: $("src").value, target_lang: $("tgt").value }),
+    });
+    const body = await r.json();
+    if (!r.ok) throw new Error(body.detail || body.title);
+    last = body; render(body);
+  } catch (e) {
+    $("out").innerHTML = `<p class="err">${esc(e.message)}</p>`;
+  } finally {
+    $("go").disabled = false; $("go").textContent = "Explain";
+  }
+}
+$("go").onclick = run;
+$("pystyle").onchange = () => last && render(last);
+$("text").addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) run(); });
+run();
+</script>
+</body>
+</html>

@@ -93,3 +93,9 @@ def test_implemented_routes_match_contract(client):
         if name in contract["components"]["schemas"] and "properties" in schema:
             want = set(contract["components"]["schemas"][name].get("properties", {}))
             assert set(schema["properties"]) == want, f"schema {name} drifted from contract"
+
+
+def test_playground_served_in_dev(client):
+    r = client.get("/playground")
+    assert r.status_code == 200
+    assert "Monet" in r.text

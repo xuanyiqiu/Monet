@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from monet_api.nlp.langdetect import detect
@@ -5,6 +7,8 @@ from monet_api.nlp.phonetics import char_pinyin, join_range
 from monet_api.nlp.text import normalize
 from monet_api.nlp.tokenize import split_at, token_range
 from monet_api.schemas import ExpressionKind, Lang, TokenKind
+
+GENERATED_CHENGYU = Path(__file__).parents[1] / "data" / "generated" / "chengyu.json"
 
 
 @pytest.mark.parametrize(
@@ -125,3 +129,13 @@ def test_lexicon_english_inflections(nlp):
 def test_lexicon_mixed_zh_with_english_slang(nlp):
     found = [t for t, _ in _terms(nlp, "这个真的no cap，绝绝子", Lang.zh)]
     assert found == ["no cap", "绝绝子"]
+
+
+@pytest.mark.skipif(not GENERATED_CHENGYU.exists(), reason="run scripts/fetch_data.py")
+def test_full_chengyu_lexicon_loads():
+    from monet_api.nlp.lexicon import load_lexicon
+
+    lex = load_lexicon(Path("data/lexicon"), GENERATED_CHENGYU)
+    assert len(lex) > 30_000
+    found = [m.text for m in lex.find("他总是自以为是，结果画蛇添足，一举两得", Lang.zh)]
+    assert found == ["自以为是", "画蛇添足", "一举两得"]

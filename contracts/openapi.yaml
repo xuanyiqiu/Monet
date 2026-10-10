@@ -403,7 +403,14 @@ components:
         title: { type: string }
         kind: { $ref: "#/components/schemas/DocumentKind" }
         status: { $ref: "#/components/schemas/DocumentStatus" }
-        progress: { type: number, minimum: 0, maximum: 1 }
+        progress:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: |
+            Fraction of pages annotated. A document becomes `ready` once extracted and its first
+            pages are annotated; progress keeps rising in the background. Pages not yet annotated
+            are annotated on demand when requested (slower first load).
         page_count: { type: [integer, "null"] }
         size_bytes: { type: integer }
         source_lang: { $ref: "#/components/schemas/SourceLang" }

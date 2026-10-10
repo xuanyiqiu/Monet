@@ -1,19 +1,24 @@
 import logging
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 
 from monet_api import __version__, errors
 from monet_api.annotator import Annotator
 from monet_api.auth import RateLimiter
 from monet_api.cache import MemoryCache, TieredCache
 from monet_api.config import Settings, get_settings
+from monet_api.documents.service import DocumentService
+from monet_api.documents.store import LocalBlobStore, MemoryDocumentRepo
 from monet_api.llm import LLMProvider, build_provider
 from monet_api.nlp.lexicon import Lexicon, load_lexicon
 from monet_api.nlp.tokenize import Tokenizer
-from monet_api.routers import core
+from monet_api.routers import core, documents
 
 log = logging.getLogger("monet")
+_STATIC = Path(__file__).parent / "static"
 
 _shared: dict[str, object] = {}
 
@@ -44,6 +49,9 @@ def create_app(settings: Settings | None = None, llm: LLMProvider | None = None)
         TieredCache(MemoryCache(), settings.redis_url),
     )
     app.state.rate_limiter = RateLimiter(settings.rate_limit_per_minute)
+    app.state.documents = DocumentService(
+        MemoryDocumentRepo(), LocalBlobStore(settings.blob_dir), app.state.annotator, settings.max_pages
+    )
 
     errors.install(app, expose_errors=settings.is_dev)
     if settings.cors_origins:
@@ -51,6 +59,14 @@ def create_app(settings: Settings | None = None, llm: LLMProvider | None = None)
             CORSMiddleware, allow_origins=settings.cors_origins, allow_methods=["*"], allow_headers=["*"]
         )
     app.include_router(core.router)
+    app.include_router(documents.router)
+
+    if settings.auth_mode == "dev":
+
+        @app.get("/playground", include_in_schema=False)
+        async def playground() -> FileResponse:
+            return FileResponse(_STATIC / "playground.html")
+
     return app
 
 
