@@ -1,0 +1,43 @@
+# Portable toolchain & local data
+.tools/
+.data/
+.claude/worktrees/
+.claude/settings.local.json
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.keystore
+*.jks
+google-services.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Android / Gradle
+.gradle/
+build/
+local.properties
+*.apk
+*.aab
+.idea/
+*.iml
+captures/
+.kotlin/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+
+# Generated data (fetched by scripts/fetch_data.py)
+services/api/data/raw/

@@ -1,0 +1,41 @@
+"""Tiny, dependency-free language guesser for the three launch languages."""
+
+import re
+
+from monet_api.nlp.text import is_han
+from monet_api.schemas import Lang
+
+_WORD = re.compile(r"[^\W\d_]+", re.UNICODE)
+
+_ES = frozenset(
+    "de la que el en y los se del las un por con una su para es al lo como más pero sus le ya este sí "
+    "porque esta entre cuando muy sin sobre también me hasta hay donde quien desde todo nos durante "
+    "todos uno les ni contra otros ese eso ante ellos esto mí antes algunos qué unos yo otro otras "
+    "otra él tanto esa estos mucho quienes nada muchos cual poco ella estar estas algunas algo "
+    "nosotros mi mis tú te ti tu tus ellas vosotros os está están soy eres somos tengo tiene hola "
+    "gracias bueno vale tío tía pues oye mira".split()
+)
+_EN = frozenset(
+    "the of and to in is it you that he was for on are with as his they be at one have this from or "
+    "had by not but what some we can out other were all there when up use your how said an each she "
+    "which do their if will way about many then them would so these her make like him into time has "
+    "look two more go see could my than been who its now did get come made may i'm don't it's just "
+    "really hey thanks yeah".split()
+)
+_ES_CHARS = set("ñáéíóúü¿¡")
+
+
+def detect(text: str, fallback: Lang = Lang.en) -> Lang:
+    han = sum(1 for c in text if is_han(c))
+    latin = sum(1 for c in text if c.isascii() and c.isalpha())
+    if han and han * 2 >= latin:
+        return Lang.zh
+
+    words = [w.lower() for w in _WORD.findall(text)]
+    if not words:
+        return Lang.zh if han else fallback
+    es = sum(1 for w in words if w in _ES) + 2 * sum(1 for c in text.lower() if c in _ES_CHARS)
+    en = sum(1 for w in words if w in _EN)
+    if es == en == 0:
+        return fallback
+    return Lang.es if es > en else Lang.en

@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash",
+      "PowerShell",
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep",
+      "WebFetch",
+      "WebSearch"
+    ],
+    "deny": [
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "PowerShell(git push --force:*)",
+      "PowerShell(git push -f:*)"
+    ]
+  },
+  "env": {
+    "JAVA_HOME": "D:\\Monet\\.tools\\jdk-21",
+    "ANDROID_HOME": "D:\\Monet\\.tools\\android-sdk",
+    "ANDROID_AVD_HOME": "D:\\Monet\\.tools\\avd",
+    "GRADLE_USER_HOME": "D:\\Monet\\.tools\\gradle-home",
+    "UV_CACHE_DIR": "D:\\Monet\\.tools\\uv-cache",
+    "UV_PYTHON_INSTALL_DIR": "D:\\Monet\\.tools\\python",
+    "UV_LINK_MODE": "copy"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell|Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-db.mjs\""
+          }
+        ]
+      }
+    ]
+  }
+}

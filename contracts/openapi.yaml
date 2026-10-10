@@ -1,0 +1,485 @@
+openapi: 3.1.0
+info:
+  title: Monet API
+  version: 0.1.0
+  description: |
+    Culturally-aware annotation (translation + phonetics + expression explanations) for zh/es/en,
+    and document processing. Source of truth for frontend and backend; see docs/ARCHITECTURE.md ADR-007.
+
+    Conventions
+    - JSON uses snake_case.
+    - A text is split into `tokens` whose `text` values concatenate back to the exact input.
+      Expressions reference tokens by index range [token_start, token_end) — no char offsets,
+      so UTF-16 (Android) vs code-point (Python) differences never matter.
+    - Errors are `application/problem+json` (RFC 9457).
+servers:
+  - url: http://localhost:8000
+    description: Local dev
+security:
+  - bearerAuth: []
+
+paths:
+  /v1/health:
+    get:
+      operationId: health
+      security: []
+      responses:
+        "200":
+          description: Service is up
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Health" }
+
+  /v1/me:
+    get:
+      operationId: me
+      responses:
+        "200":
+          description: The authenticated user
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Me" }
+        "401": { $ref: "#/components/responses/Problem" }
+
+  /v1/annotate:
+    post:
+      operationId: annotate
+      summary: Annotate one text (Detail sheet, Select mode)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AnnotateRequest" }
+      responses:
+        "200":
+          description: Annotation
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Annotation" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+        "429": { $ref: "#/components/responses/Problem" }
+        "502": { $ref: "#/components/responses/Problem" }
+
+  /v1/annotate/lines:
+    post:
+      operationId: annotateLines
+      summary: Fast annotation of several screen lines sharing context (Auto mode, reading band)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AnnotateLinesRequest" }
+      responses:
+        "200":
+          description: One annotation per input line, same order and ids
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AnnotateLinesResponse" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+        "429": { $ref: "#/components/responses/Problem" }
+        "502": { $ref: "#/components/responses/Problem" }
+
+  /v1/documents:
+    get:
+      operationId: listDocuments
+      responses:
+        "200":
+          description: The user's documents, newest first
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DocumentList" }
+        "401": { $ref: "#/components/responses/Problem" }
+    post:
+      operationId: uploadDocument
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, target_lang]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: PDF, DOCX or TXT, max 25 MB
+                target_lang: { $ref: "#/components/schemas/Lang" }
+                source_lang: { $ref: "#/components/schemas/SourceLang" }
+                title: { type: string, maxLength: 200 }
+      responses:
+        "202":
+          description: Accepted; processing runs in the background
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Document" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "413": { $ref: "#/components/responses/Problem" }
+        "415": { $ref: "#/components/responses/Problem" }
+
+  /v1/documents/{document_id}:
+    parameters:
+      - $ref: "#/components/parameters/DocumentId"
+    get:
+      operationId: getDocument
+      responses:
+        "200":
+          description: Document metadata and processing status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Document" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+    delete:
+      operationId: deleteDocument
+      responses:
+        "204": { description: Deleted }
+        "401": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /v1/documents/{document_id}/file:
+    parameters:
+      - $ref: "#/components/parameters/DocumentId"
+    get:
+      operationId: getDocumentFile
+      summary: The original uploaded file (PDF pages are rendered on device)
+      responses:
+        "200":
+          description: Original bytes
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+        "401": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /v1/documents/{document_id}/pages/{page_index}:
+    parameters:
+      - $ref: "#/components/parameters/DocumentId"
+      - name: page_index
+        in: path
+        required: true
+        schema: { type: integer, minimum: 0 }
+    get:
+      operationId: getDocumentPage
+      responses:
+        "200":
+          description: Text blocks with geometry and precomputed annotations
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DocumentPage" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409":
+          description: Document not ready yet
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+
+  /v1/feedback:
+    post:
+      operationId: sendFeedback
+      summary: Report a bad translation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FeedbackRequest" }
+      responses:
+        "202": { description: Received }
+        "401": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase JWT in production; `dev:<user-id>` when MONET_AUTH_MODE=dev.
+
+  parameters:
+    DocumentId:
+      name: document_id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+  responses:
+    Problem:
+      description: Error
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+
+  schemas:
+    Lang:
+      type: string
+      enum: [zh, es, en]
+    SourceLang:
+      type: string
+      enum: [auto, zh, es, en]
+      default: auto
+    Depth:
+      type: string
+      enum: [fast, full]
+      description: fast = translation + pinyin + expression spans; full = adds gloss, IPA and cultural explanations.
+
+    Health:
+      type: object
+      required: [status, version, llm_provider]
+      properties:
+        status: { type: string, enum: [ok] }
+        version: { type: string }
+        llm_provider: { type: string }
+
+    Me:
+      type: object
+      required: [user_id]
+      properties:
+        user_id: { type: string }
+
+    AnnotationContext:
+      type: object
+      properties:
+        surrounding:
+          type: string
+          maxLength: 2000
+          description: Nearby text that helps disambiguation (not annotated itself).
+        app:
+          type: string
+          maxLength: 100
+          description: Hint about where the text comes from, e.g. "weibo", "bilibili", "pdf".
+
+    AnnotateRequest:
+      type: object
+      required: [text, target_lang]
+      properties:
+        text: { type: string, minLength: 1, maxLength: 2000 }
+        source_lang: { $ref: "#/components/schemas/SourceLang" }
+        target_lang: { $ref: "#/components/schemas/Lang" }
+        depth:
+          allOf: [{ $ref: "#/components/schemas/Depth" }]
+          default: full
+        context: { $ref: "#/components/schemas/AnnotationContext" }
+
+    TokenKind:
+      type: string
+      enum: [word, punct, space, number, symbol]
+
+    Token:
+      type: object
+      required: [text, kind]
+      properties:
+        text: { type: string }
+        kind: { $ref: "#/components/schemas/TokenKind" }
+        pinyin:
+          type: [string, "null"]
+          description: Tone-mark pinyin, syllables space-separated (zh only), e.g. "nǐ hǎo".
+        pinyin_numbered:
+          type: [string, "null"]
+          description: Same with tone numbers, e.g. "ni3 hao3". Used for tone colors.
+        ipa:
+          type: [string, "null"]
+          description: IPA for es/en words (full depth only).
+        gloss:
+          type: [string, "null"]
+          description: Short meaning in target language (full depth only).
+
+    ExpressionKind:
+      type: string
+      enum: [chengyu, idiom, proverb, xiehouyu, meme, slang, wordplay, classical, other]
+
+    ExpressionSource:
+      type: string
+      enum: [dictionary, model, both]
+
+    Expression:
+      type: object
+      required: [kind, text, token_start, token_end, meaning, confidence, source]
+      properties:
+        kind: { $ref: "#/components/schemas/ExpressionKind" }
+        text: { type: string }
+        token_start: { type: integer, minimum: 0 }
+        token_end: { type: integer, minimum: 1, description: Exclusive }
+        pinyin: { type: [string, "null"] }
+        literal:
+          type: [string, "null"]
+          description: Word-for-word reading in the target language.
+        meaning:
+          type: string
+          description: What it actually means here, in the target language.
+        origin: { type: [string, "null"] }
+        register:
+          type: [string, "null"]
+          description: Tone/usage, e.g. "ironic, internet slang, 2021+".
+        equivalent:
+          type: [string, "null"]
+          description: Closest natural equivalent in the target language, if any.
+        confidence: { type: number, minimum: 0, maximum: 1 }
+        source: { $ref: "#/components/schemas/ExpressionSource" }
+
+    Annotation:
+      type: object
+      required: [id, text, source_lang, target_lang, depth, translation, tokens, expressions, cached]
+      properties:
+        id: { type: string, description: Stable content hash; same input -> same id. }
+        text: { type: string }
+        source_lang: { $ref: "#/components/schemas/Lang" }
+        target_lang: { $ref: "#/components/schemas/Lang" }
+        depth: { $ref: "#/components/schemas/Depth" }
+        translation: { type: string }
+        tokens:
+          type: array
+          items: { $ref: "#/components/schemas/Token" }
+        expressions:
+          type: array
+          items: { $ref: "#/components/schemas/Expression" }
+        note:
+          type: [string, "null"]
+          description: Translator's note (ambiguity, missing context, wordplay that cannot be carried over).
+        cached: { type: boolean }
+
+    LineInput:
+      type: object
+      required: [id, text]
+      properties:
+        id: { type: string, maxLength: 64, description: Client-chosen id echoed back. }
+        text: { type: string, minLength: 1, maxLength: 500 }
+
+    AnnotateLinesRequest:
+      type: object
+      required: [lines, target_lang]
+      properties:
+        lines:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items: { $ref: "#/components/schemas/LineInput" }
+        source_lang: { $ref: "#/components/schemas/SourceLang" }
+        target_lang: { $ref: "#/components/schemas/Lang" }
+        context: { $ref: "#/components/schemas/AnnotationContext" }
+
+    LineAnnotation:
+      type: object
+      required: [id, text, source_lang, translation, tokens, expressions]
+      properties:
+        id: { type: string }
+        text: { type: string }
+        source_lang: { $ref: "#/components/schemas/Lang" }
+        translation: { type: string }
+        tokens:
+          type: array
+          items: { $ref: "#/components/schemas/Token" }
+        expressions:
+          type: array
+          items: { $ref: "#/components/schemas/Expression" }
+
+    AnnotateLinesResponse:
+      type: object
+      required: [target_lang, lines]
+      properties:
+        target_lang: { $ref: "#/components/schemas/Lang" }
+        lines:
+          type: array
+          items: { $ref: "#/components/schemas/LineAnnotation" }
+
+    DocumentStatus:
+      type: string
+      enum: [queued, processing, ready, failed]
+
+    DocumentKind:
+      type: string
+      enum: [pdf, docx, txt]
+
+    Document:
+      type: object
+      required: [id, title, kind, status, progress, target_lang, source_lang, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        kind: { $ref: "#/components/schemas/DocumentKind" }
+        status: { $ref: "#/components/schemas/DocumentStatus" }
+        progress: { type: number, minimum: 0, maximum: 1 }
+        page_count: { type: [integer, "null"] }
+        size_bytes: { type: integer }
+        source_lang: { $ref: "#/components/schemas/SourceLang" }
+        target_lang: { $ref: "#/components/schemas/Lang" }
+        error: { type: [string, "null"] }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    DocumentList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Document" }
+
+    BBox:
+      type: array
+      description: "[x0, y0, x1, y1] normalized to 0..1 of the page size; origin top-left."
+      items: { type: number, minimum: 0, maximum: 1 }
+      minItems: 4
+      maxItems: 4
+
+    DocumentLine:
+      type: object
+      required: [id, text, annotation]
+      properties:
+        id: { type: string }
+        text: { type: string }
+        bbox:
+          oneOf:
+            - { $ref: "#/components/schemas/BBox" }
+            - { type: "null" }
+          description: null for reflowable documents (docx, txt).
+        annotation: { $ref: "#/components/schemas/LineAnnotation" }
+
+    DocumentBlock:
+      type: object
+      required: [id, lines]
+      properties:
+        id: { type: string }
+        bbox:
+          oneOf:
+            - { $ref: "#/components/schemas/BBox" }
+            - { type: "null" }
+        lines:
+          type: array
+          items: { $ref: "#/components/schemas/DocumentLine" }
+
+    DocumentPage:
+      type: object
+      required: [document_id, index, blocks]
+      properties:
+        document_id: { type: string, format: uuid }
+        index: { type: integer, minimum: 0 }
+        width: { type: [number, "null"], description: Page width in PDF points (null for reflow). }
+        height: { type: [number, "null"] }
+        blocks:
+          type: array
+          items: { $ref: "#/components/schemas/DocumentBlock" }
+
+    FeedbackRequest:
+      type: object
+      required: [text, target_lang]
+      properties:
+        text: { type: string, minLength: 1, maxLength: 2000 }
+        translation: { type: string, maxLength: 4000 }
+        target_lang: { $ref: "#/components/schemas/Lang" }
+        comment: { type: string, maxLength: 1000 }
+
+    Problem:
+      type: object
+      required: [title, status]
+      properties:
+        type: { type: string, default: about:blank }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string }
