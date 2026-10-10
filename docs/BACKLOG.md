@@ -11,7 +11,7 @@ Legend: `[ ]` todo · `[~] (branch)` in progress · `[x]` done. Work top-down wi
 - [ ] A-06 Postgres job queue (SKIP LOCKED, retries/backoff). AC: concurrency test.
 - [ ] A-07 Golden set (`tests/golden/*.yaml`) + live eval script with score report. AC: report in docs.
 - [ ] A-08 Supabase JWT auth + per-user rate limit. AC: tests with signed tokens.
-- [ ] A-09 Dockerfile + Cloud Run deploy notes. AC: image builds.
+- [x] A-09 Dockerfile + Cloud Run deploy notes. AC: image builds.
 
 ## Android (`apps/android`) — owner: android agent
 - [x] F-01 Project scaffold: Gradle KTS + version catalog, minSdk 26, target/compile 35, Compose, theme from DESIGN_SYSTEM (tokens, fonts via downloadable fonts), light/dark. AC: `assembleDebug` green, screenshot of theme preview on emulator.
