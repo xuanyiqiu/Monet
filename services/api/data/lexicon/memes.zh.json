@@ -1198,5 +1198,446 @@
    "en": "gaslighting / emotional manipulation",
    "es": "manipulación emocional"
   }
+ },
+ {
+  "term": "电子榨菜",
+  "lang": "zh",
+  "kind": "meme",
+  "meaning": "light videos or shows you watch while eating, like pickles with rice",
+  "equivalent": {
+   "en": "background videos for mealtime",
+   "es": "videos para ver mientras comes"
+  },
+  "pinyin": "diàn zǐ zhà cài",
+  "literal": "electronic pickled mustard stem",
+  "origin": "Popular around 2020; 榨菜 is the cheap pickle eaten with plain rice.",
+  "register": "humorous"
+ },
+ {
+  "term": "老六",
+  "lang": "zh",
+  "kind": "slang",
+  "meaning": "in games, a sneaky player who ambushes or plays underhandedly; by extension a sly person",
+  "equivalent": {
+   "en": "a sneaky camper / sly one",
+   "es": "un tramposo que va a escondidas"
+  },
+  "pinyin": "lǎo liù",
+  "literal": "old six",
+  "origin": "Gaming slang, popular from around 2022.",
+  "register": "teasing, gaming",
+  "ambiguous": true
+ },
+ {
+  "term": "氛围感",
+  "lang": "zh",
+  "kind": "slang",
+  "meaning": "an attractive, moody atmosphere or aesthetic vibe",
+  "equivalent": {
+   "en": "vibes",
+   "es": "ambiente / buen rollo"
+  },
+  "pinyin": "fēn wéi gǎn",
+  "literal": "sense of atmosphere",
+  "origin": "Lifestyle and photo-sharing buzzword, early 2020s.",
+  "register": "approving"
+ },
+ {
+  "term": "神仙打架",
+  "lang": "zh",
+  "kind": "meme",
+  "meaning": "a clash of two powerful rivals that ordinary people can only watch",
+  "equivalent": {
+   "en": "when titans clash",
+   "es": "cuando se enfrentan los gigantes"
+  },
+  "pinyin": "shén xiān dǎ jià",
+  "literal": "immortals fighting",
+  "origin": "From myth imagery of gods battling; used for clashes between big names.",
+  "register": "playful, spectator tone"
+ },
+ {
+  "term": "撒狗粮",
+  "lang": "zh",
+  "kind": "meme",
+  "meaning": "couples showing off affection in front of single people",
+  "equivalent": {
+   "en": "PDA that makes singles roll their eyes",
+   "es": "restregar el amor en la cara a los solteros"
+  },
+  "pinyin": "sā gǒu liáng",
+  "literal": "scatter dog food",
+  "origin": "Singles joke that they are 'dogs' being fed.",
+  "register": "teasing",
+  "variants": [
+   "秀恩爱",
+   "虐狗"
+  ]
+ },
+ {
+  "term": "单身狗",
+  "lang": "zh",
+  "kind": "meme",
+  "meaning": "a self-mocking word for single people",
+  "equivalent": {
+   "en": "single and miserable (jokingly)",
+   "es": "soltero (en broma)"
+  },
+  "pinyin": "dān shēn gǒu",
+  "literal": "single dog",
+  "origin": "Internet slang, around 2013.",
+  "register": "self-mocking",
+  "variants": [
+   "单身汪"
+  ]
+ },
+ {
+  "term": "土味情话",
+  "lang": "zh",
+  "kind": "meme",
+  "meaning": "deliberately cheesy pick-up lines",
+  "equivalent": {
+   "en": "cheesy pickup lines",
+   "es": "piropos cursis"
+  },
+  "pinyin": "tǔ wèi qíng huà",
+  "literal": "rustic-flavored love talk",
+  "origin": "Popular on short-video apps around 2018.",
+  "register": "humorous"
+ },
+ {
+  "term": "双标",
+  "lang": "zh",
+  "kind": "slang",
+  "meaning": "double standards: judging others and yourself by different rules",
+  "equivalent": {
+   "en": "double standards",
+   "es": "doble rasero"
+  },
+  "pinyin": "shuāng biāo",
+  "literal": "double standard",
+  "origin": "Short for 双重标准.",
+  "register": "critical",
+  "variants": [
+   "双标狗"
+  ]
+ },
+ {
+  "term": "凉凉",
+  "lang": "zh",
+  "kind": "slang",
+  "meaning": "it's over; doomed (from the 2017 song 凉凉)",
+  "equivalent": {
+   "en": "we're doomed",
+   "es": "estamos fritos"
+  },
+  "pinyin": "liáng liáng",
+  "literal": "cool cool",
+  "origin": "Made viral by the song 凉凉 from the 2017 TV series 三生三世十里桃花.",
+  "register": "gloomy, humorous",
+  "ambiguous": true
+ },
+ {
+  "term": "awsl",
+  "lang": "zh",
+  "kind": "wordplay",
+  "meaning": "'啊我死了': I'm dying (of cuteness or excitement)",
+  "equivalent": {
+   "en": "I'm dead (it's too cute)",
+   "es": "me muero (de ternura)"
+  },
+  "literal": "ah I'm dead",
+  "origin": "Pinyin initials of 啊我死了, fan communities, 2017.",
+  "register": "enthusiastic",
+  "variants": [
+   "AWSL"
+  ]
+ },
+ {
+  "term": "xswl",
+  "lang": "zh",
+  "kind": "wordplay",
+  "meaning": "'笑死我了': I'm dying of laughter",
+  "equivalent": {
+   "en": "lmao",
+   "es": "me parto de risa"
+  },
+  "literal": "laughing me to death",
+  "origin": "Pinyin initials of 笑死我了.",
+  "register": "casual",
+  "variants": [
+   "XSWL"
+  ]
+ },
+ {
+  "term": "你说得对，但是",
+  "lang": "zh",
+  "kind": "meme",
+  "meaning": "an opener that mimics the ad copy of the game Genshin Impact; used to parody a pitch or to change the subject abruptly",
+  "equivalent": {
+   "en": "you're right, but...",
+   "es": "tienes razón, pero..."
+  },
+  "pinyin": "nǐ shuō de duì, dàn shì",
+  "literal": "you're right, but",
+  "origin": "From a 2022 meme template starting with the game's intro blurb.",
+  "register": "ironic, parody"
+ },
+ {
+  "term": "阴阳怪气",
+  "lang": "zh",
+  "kind": "slang",
+  "meaning": "to speak sarcastically and passive-aggressively",
+  "equivalent": {
+   "en": "to be passive-aggressive",
+   "es": "hablar con sarcasmo hiriente"
+  },
+  "pinyin": "yīn yáng guài qì",
+  "literal": "yin-yang weird air",
+  "origin": "Old phrase, hugely common in online arguments.",
+  "register": "critical",
+  "variants": [
+   "阴阳"
+  ]
+ },
+ {
+  "term": "CPU烧了",
+  "lang": "zh",
+  "kind": "meme",
+  "meaning": "I'm overwhelmed; my brain can't process this",
+  "equivalent": {
+   "en": "my brain just fried",
+   "es": "me ha explotado la cabeza"
+  },
+  "pinyin": "CPU shāo le",
+  "literal": "the CPU burned out",
+  "origin": "Computer metaphor for mental overload.",
+  "register": "humorous",
+  "variants": [
+   "cpu烧了",
+   "我CPU烧了"
+  ]
+ },
+ {
+  "term": "薅羊毛",
+  "lang": "zh",
+  "kind": "slang",
+  "meaning": "to hunt for deals, coupons and freebies and exploit promotions",
+  "equivalent": {
+   "en": "to milk promotions",
+   "es": "aprovechar al máximo las ofertas"
+  },
+  "pinyin": "hāo yáng máo",
+  "literal": "pluck sheep wool",
+  "origin": "Wool grows back, so you shear promotions repeatedly.",
+  "register": "casual"
+ },
+ {
+  "term": "带货",
+  "lang": "zh",
+  "kind": "slang",
+  "meaning": "to sell products through livestreams or influencer posts",
+  "equivalent": {
+   "en": "to sell via livestream",
+   "es": "vender en directo"
+  },
+  "pinyin": "dài huò",
+  "literal": "bring goods",
+  "origin": "E-commerce livestream era (2019+).",
+  "register": "neutral"
+ },
+ {
+  "term": "老铁",
+  "lang": "zh",
+  "kind": "slang",
+  "meaning": "buddy, close friend (popularized by livestreamers from Northeast China)",
+  "equivalent": {
+   "en": "buddy, bro",
+   "es": "colega, tío"
+  },
+  "pinyin": "lǎo tiě",
+  "literal": "old iron",
+  "origin": "Northeastern dialect, spread through livestreams.",
+  "register": "friendly, casual"
+ },
+ {
+  "term": "扎心了老铁",
+  "lang": "zh",
+  "kind": "meme",
+  "meaning": "ouch, that hurts, buddy",
+  "equivalent": {
+   "en": "oof, that hit home",
+   "es": "ay, eso duele"
+  },
+  "pinyin": "zhā xīn le lǎo tiě",
+  "literal": "stabbed in the heart, old buddy",
+  "origin": "Livestream catchphrase, around 2016.",
+  "register": "humorous"
+ },
+ {
+  "term": "友谊的小船说翻就翻",
+  "lang": "zh",
+  "kind": "meme",
+  "meaning": "the little boat of friendship capsizes at any moment: a friendship can collapse over something trivial",
+  "equivalent": {
+   "en": "friendship is fragile (jokingly)",
+   "es": "la amistad se rompe por nada"
+  },
+  "pinyin": "yǒu yì de xiǎo chuán shuō fān jiù fān",
+  "literal": "the little boat of friendship flips whenever",
+  "origin": "Internet catchphrase, mid 2010s.",
+  "register": "humorous"
+ },
+ {
+  "term": "洗洗睡吧",
+  "lang": "zh",
+  "kind": "meme",
+  "meaning": "go wash up and go to bed: used to brush off someone's nonsense",
+  "equivalent": {
+   "en": "go to sleep already",
+   "es": "anda, vete a dormir"
+  },
+  "pinyin": "xǐ xǐ shuì ba",
+  "literal": "wash wash and sleep",
+  "origin": "Teasing reply to unrealistic fantasies.",
+  "register": "dismissive, teasing"
+ },
+ {
+  "term": "皮一下",
+  "lang": "zh",
+  "kind": "slang",
+  "meaning": "to be playfully mischievous for a moment",
+  "equivalent": {
+   "en": "to goof around",
+   "es": "hacer el payaso un rato"
+  },
+  "pinyin": "pí yī xià",
+  "literal": "be naughty for a bit",
+  "origin": "Youth slang.",
+  "register": "playful"
+ },
+ {
+  "term": "蓝瘦香菇",
+  "lang": "zh",
+  "kind": "wordplay",
+  "meaning": "'难受想哭': feeling awful and wanting to cry, written as phonetic nonsense",
+  "equivalent": {
+   "en": "feeling blue (kinda)",
+   "es": "me siento fatal"
+  },
+  "pinyin": "lán shòu xiāng gū",
+  "literal": "blue thin mushroom",
+  "origin": "2016 viral video of a man with a Guangxi accent.",
+  "register": "humorous"
+ },
+ {
+  "term": "厉害了我的哥",
+  "lang": "zh",
+  "kind": "meme",
+  "meaning": "awesome, bro!",
+  "equivalent": {
+   "en": "that's awesome, dude",
+   "es": "¡qué crack, tío!"
+  },
+  "pinyin": "lì hai le wǒ de gē",
+  "literal": "amazing, my brother",
+  "origin": "Catchphrase around 2016.",
+  "register": "enthusiastic"
+ },
+ {
+  "term": "然并卵",
+  "lang": "zh",
+  "kind": "meme",
+  "meaning": "'然而并没有卵用': but it's useless",
+  "equivalent": {
+   "en": "but it's pointless",
+   "es": "pero no sirve de nada"
+  },
+  "pinyin": "rán bìng luǎn",
+  "literal": "however not even an egg",
+  "origin": "2015 slang; the last character has a vulgar origin.",
+  "register": "dismissive, slightly vulgar"
+ },
+ {
+  "term": "也是醉了",
+  "lang": "zh",
+  "kind": "meme",
+  "meaning": "I'm speechless; I give up",
+  "equivalent": {
+   "en": "I'm speechless",
+   "es": "me quedo sin palabras"
+  },
+  "pinyin": "yě shì zuì le",
+  "literal": "also drunk",
+  "origin": "Popular around 2014.",
+  "register": "exasperated"
+ },
+ {
+  "term": "不明觉厉",
+  "lang": "zh",
+  "kind": "meme",
+  "meaning": "'虽不明白但觉得厉害': I don't get it but it sounds impressive",
+  "equivalent": {
+   "en": "I don't get it but wow",
+   "es": "no lo entiendo pero suena impresionante"
+  },
+  "pinyin": "bù míng jué lì",
+  "literal": "don't understand but feel it's awesome",
+  "origin": "Internet slang, early 2010s.",
+  "register": "playful"
+ },
+ {
+  "term": "人艰不拆",
+  "lang": "zh",
+  "kind": "meme",
+  "meaning": "'人生已经如此艰难，有些事就不要拆穿了': life is hard enough, let's not expose the truth",
+  "equivalent": {
+   "en": "let's not burst the bubble",
+   "es": "no me lo estropees, la vida ya es dura"
+  },
+  "pinyin": "rén jiān bù chāi",
+  "literal": "life hard don't tear down",
+  "origin": "Early 2010s four-character slang.",
+  "register": "humorous"
+ },
+ {
+  "term": "喜大普奔",
+  "lang": "zh",
+  "kind": "meme",
+  "meaning": "joyful news everyone celebrates and shares (abbreviation of 喜闻乐见, 大快人心, 普天同庆, 奔走相告)",
+  "equivalent": {
+   "en": "great news for all",
+   "es": "¡qué alegría para todos!"
+  },
+  "pinyin": "xǐ dà pǔ bēn",
+  "origin": "Early 2010s abbreviation slang.",
+  "register": "ironic or cheerful"
+ },
+ {
+  "term": "十动然拒",
+  "lang": "zh",
+  "kind": "meme",
+  "meaning": "'十分感动，然而拒绝': deeply moved, but still rejecting you",
+  "equivalent": {
+   "en": "touched, but still a no",
+   "es": "muy conmovido, pero no"
+  },
+  "pinyin": "shí dòng rán jù",
+  "origin": "Dating slang, early 2010s.",
+  "register": "humorous"
+ },
+ {
+  "term": "绝了",
+  "lang": "zh",
+  "kind": "slang",
+  "meaning": "amazing or unbelievable; can be sarcastic",
+  "equivalent": {
+   "en": "unreal / incredible",
+   "es": "increíble"
+  },
+  "pinyin": "jué le",
+  "literal": "it's the absolute end",
+  "register": "enthusiastic, sometimes ironic",
+  "ambiguous": true
  }
 ]

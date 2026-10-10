@@ -16,7 +16,7 @@ Legend: `[ ]` todo · `[~] (branch)` in progress · `[x]` done. Work top-down wi
 ### API round 2 (after the Android Lens works end to end)
 - [ ] A-10 Supabase Storage `BlobStore` (blobs must survive Cloud Run restarts). AC: same interface as `LocalBlobStore`, contract test with a fake HTTP server.
 - [ ] A-11 Scanned PDFs and images: server-side OCR (RapidOCR) feeding the same page/line model, with bboxes. AC: golden scanned fixture; clear error when OCR is unavailable.
-- [ ] A-12 Lexicon growth: +300 memes/slang/idioms (zh priority: 2023-2026 slang, 谐音梗, 歇后语), each with origin and equivalents; a `scripts/lint_lexicon.py` that checks schema, duplicates and ambiguous-term flags. AC: lint in CI, golden cases added for new terms.
+- [~] (main) A-12 Lexicon growth: +300 memes/slang/idioms (zh priority: 2023-2026 slang, 谐音梗, 歇后语), each with origin and equivalents; a `scripts/lint_lexicon.py` that checks schema, duplicates and ambiguous-term flags. AC: lint in CI, golden cases added for new terms.
 - [ ] A-13 Feedback persistence (`feedback` table, migration 0003) + `scripts/feedback_report.py` listing the most reported terms. AC: tests on Postgres.
 - [ ] A-14 Redis-backed rate limit and cache wired through `MONET_REDIS_URL` (docker compose profile `cache`). AC: tests with the real container.
 - [ ] A-15 Semantic cache with pgvector for near-duplicate screen lines (OCR noise). AC: measurable hit-rate test on perturbed inputs.
