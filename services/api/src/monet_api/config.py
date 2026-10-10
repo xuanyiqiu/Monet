@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     llm_thinking_budget: int | None = 0  # gemini: 0 = no hidden reasoning (much faster); None = model default
 
     # Storage
-    database_url: str | None = None  # postgresql+asyncpg://monet:monet@localhost:54329/monet
+    database_url: str | None = None  # postgresql+asyncpg://monet:monet@127.0.0.1:54329/monet
     redis_url: str | None = None
     blob_dir: Path = REPO_ROOT / ".data" / "blobs"
     cache_dir: Path = REPO_ROOT / ".data" / "cache"

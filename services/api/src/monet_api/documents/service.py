@@ -93,13 +93,15 @@ class DocumentService:
         return rec if rec and rec.owner == owner else None
 
     async def page(self, rec: DocRecord, index: int) -> DocumentPage:
-        if index in rec.pages:
-            return rec.pages[index]
+        if (page := await self.repo.get_page(rec.doc.id, index)) is not None:
+            return page
         lock = self._page_locks.setdefault((rec.doc.id, index), asyncio.Lock())
         async with lock:
-            if index not in rec.pages:
-                await self.repo.save_page(rec.doc.id, await self._annotate_page(rec, index))
-        return rec.pages[index]
+            page = await self.repo.get_page(rec.doc.id, index)
+            if page is None:
+                page = await self._annotate_page(rec, index)
+                await self.repo.save_page(rec.doc.id, page)
+        return page
 
     # ------------------------------------------------------------------ pipeline
 
@@ -111,7 +113,7 @@ class DocumentService:
             await self.repo.update(doc_id, status=DocumentStatus.processing, progress=0.02)
             data = await self.blobs.get(rec.blob_key)
             pages = await asyncio.to_thread(extract, rec.doc.kind, data, self.max_pages)
-            await self.repo.set_extracted(doc_id, pages)
+            await self.repo.save_extracted(doc_id, pages)
             await self.repo.update(doc_id, page_count=len(pages), progress=0.05)
             total = len(pages)
             for i in range(total):
@@ -131,7 +133,9 @@ class DocumentService:
             )
 
     async def _annotate_page(self, rec: DocRecord, index: int) -> DocumentPage:
-        page: PageData = rec.extracted[index]
+        page: PageData | None = await self.repo.get_extracted(rec.doc.id, index)
+        if page is None:
+            raise ExtractError(f"page {index} was not extracted")
         flat = [(b, li, line) for b, block in enumerate(page.blocks) for li, line in enumerate(block.lines)]
         inputs = [LineInput(id=f"{b}.{li}", text=line.text[:500]) for b, li, line in flat]
         annotated = {}

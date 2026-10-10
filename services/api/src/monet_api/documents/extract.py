@@ -41,6 +41,27 @@ class PageData:
     def line_count(self) -> int:
         return sum(len(b.lines) for b in self.blocks)
 
+    def to_dict(self) -> dict:
+        return {
+            "width": self.width,
+            "height": self.height,
+            "blocks": [
+                {"bbox": b.bbox, "lines": [{"text": ln.text, "bbox": ln.bbox} for ln in b.lines]}
+                for b in self.blocks
+            ],
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "PageData":
+        return cls(
+            width=d.get("width"),
+            height=d.get("height"),
+            blocks=[
+                BlockData([LineData(ln["text"], ln.get("bbox")) for ln in b["lines"]], b.get("bbox"))
+                for b in d["blocks"]
+            ],
+        )
+
 
 def sniff_kind(data: bytes) -> DocumentKind | None:
     """Decide the type from magic bytes, never from the filename."""

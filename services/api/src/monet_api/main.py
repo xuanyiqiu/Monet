@@ -1,17 +1,19 @@
 import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
-from monet_api import __version__, errors
+from monet_api import __version__, db, errors
 from monet_api.annotator import Annotator
 from monet_api.auth import RateLimiter
 from monet_api.cache import MemoryCache, TieredCache
 from monet_api.config import Settings, get_settings
 from monet_api.documents.service import DocumentService
-from monet_api.documents.store import LocalBlobStore, MemoryDocumentRepo
+from monet_api.documents.store import DocumentRepo, LocalBlobStore, MemoryDocumentRepo
 from monet_api.llm import LLMProvider, build_provider
 from monet_api.nlp.lexicon import Lexicon, load_lexicon
 from monet_api.nlp.tokenize import Tokenizer
@@ -34,7 +36,19 @@ def shared_nlp(settings: Settings) -> tuple[Lexicon, Tokenizer]:
 
 def create_app(settings: Settings | None = None, llm: LLMProvider | None = None) -> FastAPI:
     settings = settings or get_settings()
+    engine = db.create_engine(settings.database_url) if settings.database_url else None
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        if engine is not None:
+            await db.upgrade(settings.database_url)  # idempotent; same path in dev and prod
+        yield
+        await app.state.documents.join()
+        if engine is not None:
+            await engine.dispose()
+
     app = FastAPI(
+        lifespan=lifespan,
         title="Monet API",
         version=__version__,
         docs_url="/docs" if settings.is_dev else None,
@@ -49,8 +63,9 @@ def create_app(settings: Settings | None = None, llm: LLMProvider | None = None)
         TieredCache(MemoryCache(), settings.redis_url),
     )
     app.state.rate_limiter = RateLimiter(settings.rate_limit_per_minute)
+    repo: DocumentRepo = db.PgDocumentRepo(engine) if engine is not None else MemoryDocumentRepo()
     app.state.documents = DocumentService(
-        MemoryDocumentRepo(), LocalBlobStore(settings.blob_dir), app.state.annotator, settings.max_pages
+        repo, LocalBlobStore(settings.blob_dir), app.state.annotator, settings.max_pages
     )
 
     errors.install(app, expose_errors=settings.is_dev)

@@ -34,7 +34,7 @@ process.stdin.on("end", () => {
       process.stderr.write(
         `BLOCKED by .claude/hooks/guard-db.mjs: this ${why}\n` +
           `The user's "postgres" database is their WORK dev DB and is off-limits. ` +
-          `Use Monet's own DB: postgresql://monet:monet@localhost:54329/monet (docker compose service "db").\n`
+          `Use Monet's own DB: postgresql://monet:monet@127.0.0.1:54329/monet (docker compose service "db").\n`
       );
       process.exit(2);
     }

@@ -4,7 +4,7 @@ In-memory/local-disk implementations for dev and tests; Postgres + Supabase Stor
 """
 
 import asyncio
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Protocol
@@ -52,8 +52,6 @@ class DocRecord:
     owner: str
     blob_key: str
     mime: str
-    extracted: list[PageData] = field(default_factory=list)
-    pages: dict[int, DocumentPage] = field(default_factory=dict)
 
 
 class DocumentRepo(Protocol):
@@ -61,14 +59,18 @@ class DocumentRepo(Protocol):
     async def get(self, doc_id: UUID) -> DocRecord | None: ...
     async def list_owned(self, owner: str) -> list[DocRecord]: ...
     async def update(self, doc_id: UUID, **fields) -> Document | None: ...
-    async def set_extracted(self, doc_id: UUID, pages: list[PageData]) -> None: ...
+    async def save_extracted(self, doc_id: UUID, pages: list[PageData]) -> None: ...
+    async def get_extracted(self, doc_id: UUID, index: int) -> PageData | None: ...
     async def save_page(self, doc_id: UUID, page: DocumentPage) -> None: ...
+    async def get_page(self, doc_id: UUID, index: int) -> DocumentPage | None: ...
     async def delete(self, doc_id: UUID) -> None: ...
 
 
 class MemoryDocumentRepo:
     def __init__(self) -> None:
         self._recs: dict[UUID, DocRecord] = {}
+        self._extracted: dict[UUID, list[PageData]] = {}
+        self._pages: dict[tuple[UUID, int], DocumentPage] = {}
 
     async def add(self, rec: DocRecord) -> None:
         self._recs[rec.doc.id] = rec
@@ -87,13 +89,22 @@ class MemoryDocumentRepo:
         rec.doc = rec.doc.model_copy(update={**fields, "updated_at": now()})
         return rec.doc
 
-    async def set_extracted(self, doc_id: UUID, pages: list[PageData]) -> None:
-        if rec := self._recs.get(doc_id):
-            rec.extracted = pages
+    async def save_extracted(self, doc_id: UUID, pages: list[PageData]) -> None:
+        self._extracted[doc_id] = pages
+
+    async def get_extracted(self, doc_id: UUID, index: int) -> PageData | None:
+        pages = self._extracted.get(doc_id, [])
+        return pages[index] if 0 <= index < len(pages) else None
 
     async def save_page(self, doc_id: UUID, page: DocumentPage) -> None:
-        if rec := self._recs.get(doc_id):
-            rec.pages[page.index] = page
+        if doc_id in self._recs:
+            self._pages[(doc_id, page.index)] = page
+
+    async def get_page(self, doc_id: UUID, index: int) -> DocumentPage | None:
+        return self._pages.get((doc_id, index))
 
     async def delete(self, doc_id: UUID) -> None:
         self._recs.pop(doc_id, None)
+        self._extracted.pop(doc_id, None)
+        for k in [k for k in self._pages if k[0] == doc_id]:
+            del self._pages[k]

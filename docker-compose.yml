@@ -1,0 +1,31 @@
+# Monet's own services for local development. Never use the developer's local PostgreSQL service.
+# Postgres listens on 54329 both inside and outside the container, on purpose: it can never
+# overlap with the default Postgres port used by the developer's work database.
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: monet-db
+    command: ["postgres", "-p", "54329"]
+    environment:
+      POSTGRES_USER: monet
+      POSTGRES_PASSWORD: monet
+      POSTGRES_DB: monet
+    ports:
+      - "127.0.0.1:54329:54329"
+    volumes:
+      - monet-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -p 54329 -U monet -d monet"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    container_name: monet-redis
+    ports:
+      - "127.0.0.1:63790:6379"
+    profiles: ["cache"]
+
+volumes:
+  monet-pgdata:

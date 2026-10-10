@@ -91,6 +91,6 @@ async def get_document_page(
 ) -> DocumentPage:
     if rec.doc.status != DocumentStatus.ready:
         raise Problem(409, "Document not ready", f"Status: {rec.doc.status.value}")
-    if not 0 <= page_index < len(rec.extracted):
+    if not 0 <= page_index < (rec.doc.page_count or 0):
         raise Problem(404, "Page not found")
     return await svc.page(rec, page_index)
