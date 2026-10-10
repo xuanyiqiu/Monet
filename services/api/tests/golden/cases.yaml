@@ -1,0 +1,231 @@
+# Golden set. Fields:
+#   text, target            input and target language
+#   expect_dict: [..]       expressions the DICTIONARY must detect (offline test) and the final output must contain
+#   expect_model: [..]      expressions only the model can find (live eval only)
+#   forbid: [..]            expressions that must NOT be reported (false positives: price "666", 润 in 利润...)
+#   tr_any: [..]            translation must contain at least one (case-insensitive)
+#   tr_none: [..]           translation must contain none (literal calques)
+# Keyword checks are deliberately loose: they catch calques and misreadings, not style.
+
+# ---------------------------------------------------------------- Chinese -> English/Spanish
+- id: zh-meme-work-complaint
+  text: 家人们谁懂啊，老板又在画大饼
+  target: en
+  expect_dict: [家人们谁懂啊, 画大饼]
+  tr_any: [promise, pie in the sky, dangling, carrot, hollow, empty, pipe dream]
+- id: zh-homophone-bengbu
+  text: 我直接蚌埠住了
+  target: en
+  expect_dict: [蚌埠住了]
+  tr_any: [hold it together, hold back, lose it, losing it, crack, can't help, couldn't help, break, can't take, lost it, hold in]
+  tr_none: [bengbu]
+- id: zh-number-slang-price
+  text: 这个卖666元，太贵了
+  target: en
+  forbid: ['666']
+  tr_any: ['666']
+  tr_none: [awesome, great job, nice one, impressive]
+- id: zh-number-slang-praise
+  text: 666，这波操作太秀了
+  target: en
+  expect_dict: ['666']
+  tr_any: [awesome, great, nice, wow, amazing, sick, skill, impressive, incredible, smooth, slick, play]
+- id: zh-number-price-total
+  text: 一共666块，不能再便宜了
+  target: en
+  forbid: ['666']
+  tr_any: ['666']
+- id: zh-abbrev-yyds
+  text: 这个主播yyds！
+  target: en
+  expect_dict: [yyds]
+  tr_any: [goat, greatest, best, legend, unbeatable]
+- id: zh-chengyu-duiniu
+  text: 跟他讲道理简直是对牛弹琴
+  target: en
+  expect_dict: [对牛弹琴]
+  tr_any: [pearls, waste, lute, cow, deaf, pointless, futile]
+- id: zh-chengyu-huashe
+  text: 你这样改只会画蛇添足
+  target: en
+  expect_dict: [画蛇添足]
+  tr_any: [gild, overdo, unnecessary, superfluous, spoil, ruin, worse, extra, redundant, over-do, counterproductive, backfire, harm, unneeded]
+- id: zh-chengyu-yiju
+  text: 这个方案一举两得，大家都满意
+  target: es
+  expect_dict: [一举两得]
+  tr_any: [dos pájaros, dos pajaros, doble, beneficio, ventaja, a la vez, ambos, dos objetivos, dos fines, de un tiro, de una vez, de un solo golpe]
+- id: zh-single-char-trap
+  text: 公司的利润很高
+  target: en
+  forbid: [润]
+  tr_any: [profit]
+- id: zh-emo
+  text: 我今天有点emo
+  target: en
+  expect_dict: [emo]
+  tr_any: [down, sad, blue, feels, melanchol, depress, low, gloomy, moody]
+- id: zh-social
+  text: 他是个社牛，我却是社恐
+  target: en
+  expect_dict: [社牛, 社恐]
+  tr_any: [extrovert, introvert, social, anxious, shy]
+- id: zh-anti-proverb
+  text: 听君一席话，如听一席话
+  target: en
+  expect_dict: [听君一席话，如听一席话]
+  tr_any: [nothing, obvious, useless, listening to, captain, told me, point]
+- id: zh-thank-you-pun
+  text: 老板又要我周末加班，栓Q
+  target: en
+  expect_dict: [栓Q]
+  tr_any: [thank, great, wonderful, thanks]
+- id: zh-number-520
+  text: 今天是520，我爱你
+  target: en
+  expect_dict: ['520']
+  tr_any: [love, '520']
+- id: zh-xiehouyu
+  text: 他每天都这样，外甥打灯笼——照舅
+  target: en
+  expect_dict: [外甥打灯笼——照舅]
+  tr_any: [same, as usual, as before, uncle, old, always]
+- id: zh-literary-allusion
+  text: 他放不下身段，还穿着孔乙己的长衫
+  target: en
+  expect_dict: [孔乙己的长衫]
+  tr_any: [gown, robe, pride, degree, scholar, kong yiji, educat]
+- id: zh-triple-trend
+  text: 年轻人都在躺平、摆烂，可是还有人在内卷
+  target: es
+  expect_dict: [躺平, 摆烂, 内卷]
+  tr_any: [tumbar, acostar, rendir, resign, competencia, carrera, rat race, abandon, bajar]
+- id: zh-teasing-es
+  text: 他真是个显眼包
+  target: es
+  expect_dict: [显眼包]
+  tr_any: [payaso, exhibicionista, presumido, llamar la atención, bromista, chistoso, gracioso, llamativo, showman, protagonista, cómico]
+- id: zh-worker
+  text: 打工人，打工魂，早上好
+  target: en
+  expect_dict: [打工人]
+  tr_any: [worker, grind, hustl, employee, wage, working, corporate]
+- id: zh-plain-sentence
+  text: 请问最近的地铁站怎么走？
+  target: en
+  tr_any: [subway, metro, station]
+
+# ---------------------------------------------------------------- Spanish -> English/Chinese
+- id: es-idiom-nubes
+  text: Está en las nubes y no se entera de nada
+  target: en
+  expect_dict: [está en las nubes]
+  tr_any: [clouds, daydream, spaced, zoning, head in the, miles away, oblivious, dreaming]
+- id: es-idiom-pelos
+  text: Mi jefe no tiene pelos en la lengua
+  target: en
+  expect_dict: [no tiene pelos en la lengua]
+  tr_any: [mince, blunt, filter, frank, straight, outspoken, direct, hold back]
+- id: es-idiom-pelo
+  text: No me tomes el pelo, que ya lo sé
+  target: en
+  expect_dict: [tomes el pelo]
+  tr_any: [pull, leg, fool, kidding, tease, joking, mess with]
+- id: es-slang-fuerte
+  text: ¡Qué fuerte, no me lo puedo creer!
+  target: en
+  expect_dict: [Qué fuerte]
+  tr_any: [wow, crazy, wild, intense, heavy, no way, insane, unbelievable, can't believe, tough]
+- id: es-slang-guay
+  text: Tío, esto está muy guay
+  target: en
+  expect_dict: [guay]
+  tr_any: [cool, dude, man, guy, great, awesome, neat]
+- id: es-idiom-pan-comido
+  text: El examen fue pan comido
+  target: en
+  expect_dict: [pan comido]
+  tr_any: [cake, easy, breeze, walk in the park, child's play]
+- id: es-idiom-calabazas
+  text: Le dieron calabazas en la fiesta
+  target: en
+  expect_dict: [dieron calabazas]
+  tr_any: [turned down, rejected, shot down, rebuff, blew off, dumped, brush]
+  tr_none: [pumpkin]
+- id: es-slang-mola
+  text: Esto mola mucho
+  target: en
+  expect_dict: [mola]
+  tr_any: [cool, awesome, great, rocks, love, amazing]
+- id: es-idiom-pegar-ojo
+  text: Anoche no pegué ojo
+  target: en
+  expect_dict: [no pegué ojo]
+  tr_any: [sleep, wink, eye]
+- id: es-idiom-ojo-cara
+  text: Ese reloj cuesta un ojo de la cara
+  target: zh
+  expect_dict: [cuesta un ojo de la cara]
+  tr_any: [贵, 天价, 大价钱, 昂贵, 价格不菲]
+- id: es-plain
+  text: ¿Dónde está la estación de tren?
+  target: zh
+  tr_any: [火车站, 车站]
+
+# ---------------------------------------------------------------- English -> Spanish/Chinese
+- id: en-slang-tea-cap
+  text: She spilled the tea, no cap.
+  target: es
+  expect_dict: [spilled the tea, no cap]
+  tr_any: [chisme, salseo, cotilleo, soltó, contó, reveló, sin mentir, en serio, de verdad, te lo juro]
+  tr_none: [derramó el té, sin gorra]
+- id: en-meme-grass
+  text: Bro, go touch grass.
+  target: es
+  expect_dict: [touch grass]
+  tr_any: [salir, aire, calle, césped, hierba, pasto, fuera, naturaleza, desconect]
+- id: en-slang-giving
+  text: It's giving main character energy.
+  target: es
+  expect_dict: [It's giving, main character energy]
+  tr_any: [protagonista, vibra, vibras, personaje principal, aura]
+- id: en-slang-rizz
+  text: He's got so much rizz.
+  target: es
+  expect_dict: [rizz]
+  tr_any: [ligar, carisma, encanto, labia, magnetismo, don]
+- id: en-idiom-break-leg
+  text: Break a leg tonight!
+  target: es
+  expect_dict: [Break a leg]
+  tr_any: [suerte, mierda, éxito, éxitos]
+  tr_none: [rompe una pierna, romper una pierna, rómpete una pierna]
+- id: en-idiom-arm-leg
+  text: That car costs an arm and a leg.
+  target: zh
+  expect_dict: [costs an arm and a leg]
+  tr_any: [贵, 天价, 大价钱, 昂贵]
+- id: en-idiom-bush
+  text: Stop beating around the bush and tell me.
+  target: es
+  expect_dict: [beating around the bush]
+  tr_any: [ramas, rodeos, al grano, vueltas]
+- id: en-slang-lowkey
+  text: I'm lowkey tired of this.
+  target: zh
+  expect_dict: [lowkey]
+  tr_any: [有点, 其实, 偷偷, 悄悄, 暗地里, 默默, 稍微]
+- id: en-slang-mid
+  text: Honestly that movie was mid.
+  target: es
+  expect_dict: [mid]
+  tr_any: [regular, mediocre, del montón, normalito, meh, pasable, normal, flojo, justita]
+- id: en-slang-ghosting
+  text: He kept ghosting me for weeks.
+  target: zh
+  expect_dict: [ghosting]
+  tr_any: [消失, 失踪, 已读不回, 不理, 冷落, 鸽, 失联, 不回, 避而不见, 不联系, 冷暴力]
+- id: en-plain
+  text: The meeting starts at nine tomorrow.
+  target: es
+  tr_any: [reunión, nueve, mañana]

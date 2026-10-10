@@ -53,6 +53,24 @@ document_pages = sa.Table(
     sa.PrimaryKeyConstraint("document_id", "index"),
 )
 
+jobs = sa.Table(
+    "jobs",
+    metadata,
+    sa.Column("id", PG_UUID(as_uuid=True), primary_key=True),
+    sa.Column("kind", sa.Text, nullable=False),
+    sa.Column("payload", JSONB, nullable=False),
+    sa.Column("status", sa.Text, nullable=False, server_default="queued"),
+    sa.Column("attempts", sa.Integer, nullable=False, server_default="0"),
+    sa.Column("max_attempts", sa.Integer, nullable=False, server_default="3"),
+    sa.Column("run_at", sa.DateTime(timezone=True), nullable=False),
+    sa.Column("locked_by", sa.Text),
+    sa.Column("locked_until", sa.DateTime(timezone=True)),
+    sa.Column("last_error", sa.Text),
+    sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+    sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+    sa.Index("ix_jobs_claim", "status", "run_at"),
+)
+
 _DOC_FIELDS = [
     "id", "title", "kind", "status", "progress", "page_count", "size_bytes",
     "source_lang", "target_lang", "error", "created_at", "updated_at",

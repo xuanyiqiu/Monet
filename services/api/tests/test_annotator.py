@@ -84,7 +84,7 @@ async def test_model_rejects_ambiguous_candidate_and_adds_its_own(nlp):
     )
     a = Annotator(lex, tok, llm, MemoryCache())
     ann = await a.annotate(AnnotateRequest(text="这个卖666元，太宰人了", target_lang=Lang.en))
-    assert llm.last_payload["candidates"][0]["text"] == "666"
+    assert llm.last_payload["candidates"] == []  # "666元" is a price: never offered as slang
     assert [e.text for e in ann.expressions] == ["宰人"]
     e = ann.expressions[0]
     assert e.source == ExpressionSource.model and e.confidence <= 0.85

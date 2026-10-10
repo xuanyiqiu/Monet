@@ -13,7 +13,7 @@ from monet_api.cache import Cache, cache_key
 from monet_api.llm.base import LLMError, LLMProvider
 from monet_api.llm.prompts import PROMPT_VERSION, SYSTEM_FULL, SYSTEM_LINES, full_payload, lines_payload
 from monet_api.nlp.langdetect import detect
-from monet_api.nlp.lexicon import Lexicon, Match
+from monet_api.nlp.lexicon import Lexicon, Match, is_quantity
 from monet_api.nlp.phonetics import char_pinyin, join_range
 from monet_api.nlp.text import has_han, normalize
 from monet_api.nlp.tokenize import Span, Tokenizer, split_at, token_range
@@ -105,6 +105,7 @@ class Annotator:
         matches = [
             m
             for m in self.lexicon.find(text, lang)
+            if not is_quantity(text, m.start, m.end)
             # single-character Chinese terms (卷, 润) only count when the segmenter isolates them
             if not (m.end - m.start == 1 and has_han(m.text))
             or (m.start in by_start and by_start[m.start].end == m.end)
@@ -186,6 +187,8 @@ class Annotator:
             if start < 0:
                 continue
             end = start + len(e["text"])
+            if is_quantity(a.text, start, end):
+                continue  # the model mistook a price/quantity for slang
             if any(not (end <= it.start or start >= it.end) for it in items):
                 continue
             items.append(

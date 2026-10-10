@@ -139,3 +139,62 @@ def test_full_chengyu_lexicon_loads():
     assert len(lex) > 30_000
     found = [m.text for m in lex.find("他总是自以为是，结果画蛇添足，一举两得", Lang.zh)]
     assert found == ["自以为是", "画蛇添足", "一举两得"]
+
+
+@pytest.mark.parametrize(
+    ("text", "slang"),
+    [
+        ("这个卖666元", False),
+        ("一共666块", False),
+        ("总共520人参加", False),
+        ("售价￥233", False),
+        ("花了886", False),
+        ("666，这波操作太秀了", True),
+        ("今天是520，我爱你", True),
+        ("233333", True),
+    ],
+)
+def test_digit_slang_vs_quantities(nlp, annotator, text, slang):
+    found = [m.text for m in annotator.analyze(text, Lang.zh).matches]
+    assert bool(found) is slang, f"{text}: {found}"
+
+
+@pytest.mark.parametrize(
+    ("text", "lang", "expected"),
+    [
+        ("今天又要电子榨菜配饭了", Lang.zh, ["电子榨菜"]),
+        ("他是老六，专门蹲点", Lang.zh, ["老六"]),
+        ("单身狗别看，他们又在撒狗粮", Lang.zh, ["单身狗", "撒狗粮"]),
+        ("你说得对，但是这和我有什么关系", Lang.zh, ["你说得对，但是"]),
+        ("别阴阳怪气的，扎心了老铁", Lang.zh, ["阴阳怪气", "扎心了老铁"]),
+        ("他说话擀面杖吹火——一窍不通", Lang.zh, ["擀面杖吹火——一窍不通"]),
+        ("Ayer me puse las botas y hoy estoy sin blanca", Lang.es, ["puse las botas", "estoy sin blanca"]),
+        ("Se hace el sueco cuando habla por los codos", Lang.es, ["hace el sueco", "habla por los codos"]),
+        (
+            "Esta semana no dejo de currar y duermo a pierna suelta",
+            Lang.es,
+            ["currar", "duermo a pierna suelta"],
+        ),
+        ("She had a glow up and he's lowkey a simp.", Lang.en, ["glow up", "lowkey", "simp"]),
+        (
+            "It's raining cats and dogs, let's circle back later.",
+            Lang.en,
+            ["raining cats and dogs", "circle back"],
+        ),
+        (
+            "He kicked the bucket and let the cat out of the bag",
+            Lang.en,
+            ["kicked the bucket", "let the cat out of the bag"],
+        ),
+        ("That gave me the ick, total situationship.", Lang.en, ["gave me the ick", "situationship"]),
+    ],
+)
+def test_new_lexicon_entries_are_detected(nlp, annotator, text, lang, expected):
+    found = [m.text for m in annotator.analyze(text, lang).matches]
+    assert found == expected, found
+
+
+def test_ambiguous_latin_slang_in_chinese_text_is_only_a_flagged_candidate(nlp, annotator):
+    """The model arbitrates ambiguous terms; the dictionary must say they are uncertain."""
+    matches = annotator.analyze("我今天吃了很咸的东西，salty", Lang.zh).matches
+    assert [(m.text, m.entry.ambiguous) for m in matches] == [("salty", True)]

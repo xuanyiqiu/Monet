@@ -6,7 +6,7 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 API_ROOT = Path(__file__).resolve().parents[2]  # services/api
-REPO_ROOT = API_ROOT.parents[1]
+REPO_ROOT = API_ROOT.parents[1] if len(API_ROOT.parents) > 1 else API_ROOT  # in the image API_ROOT is /app
 
 
 class Settings(BaseSettings):
@@ -20,7 +20,8 @@ class Settings(BaseSettings):
 
     # Auth: "dev" accepts `Bearer dev:<user-id>`; "supabase" verifies Supabase JWTs.
     auth_mode: Literal["dev", "supabase"] = "dev"
-    supabase_jwt_secret: str | None = None
+    supabase_jwt_secret: str | None = None  # HS256 projects
+    supabase_url: str | None = None  # https://<ref>.supabase.co ; enables ES256/RS256 via JWKS
     supabase_jwt_audience: str = "authenticated"
 
     # LLM

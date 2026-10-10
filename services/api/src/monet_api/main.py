@@ -2,6 +2,7 @@ import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
+from uuid import UUID
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,8 +13,9 @@ from monet_api.annotator import Annotator
 from monet_api.auth import RateLimiter
 from monet_api.cache import MemoryCache, TieredCache
 from monet_api.config import Settings, get_settings
-from monet_api.documents.service import DocumentService
+from monet_api.documents.service import PROCESS_JOB, DocumentService
 from monet_api.documents.store import DocumentRepo, LocalBlobStore, MemoryDocumentRepo
+from monet_api.jobs import Job, PgJobQueue, Worker
 from monet_api.llm import LLMProvider, build_provider
 from monet_api.nlp.lexicon import Lexicon, load_lexicon
 from monet_api.nlp.tokenize import Tokenizer
@@ -40,9 +42,19 @@ def create_app(settings: Settings | None = None, llm: LLMProvider | None = None)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        worker = None
         if engine is not None:
             await db.upgrade(settings.database_url)  # idempotent; same path in dev and prod
+            docs = app.state.documents
+
+            async def process_document(payload: dict, job: Job) -> None:
+                await docs.process(UUID(payload["doc_id"]), last_attempt=job.attempts >= job.max_attempts)
+
+            worker = Worker(app.state.queue, {PROCESS_JOB: process_document})
+            worker.start()
         yield
+        if worker is not None:
+            await worker.stop()
         await app.state.documents.join()
         if engine is not None:
             await engine.dispose()
@@ -64,8 +76,9 @@ def create_app(settings: Settings | None = None, llm: LLMProvider | None = None)
     )
     app.state.rate_limiter = RateLimiter(settings.rate_limit_per_minute)
     repo: DocumentRepo = db.PgDocumentRepo(engine) if engine is not None else MemoryDocumentRepo()
+    app.state.queue = PgJobQueue(engine) if engine is not None else None
     app.state.documents = DocumentService(
-        repo, LocalBlobStore(settings.blob_dir), app.state.annotator, settings.max_pages
+        repo, LocalBlobStore(settings.blob_dir), app.state.annotator, settings.max_pages, app.state.queue
     )
 
     errors.install(app, expose_errors=settings.is_dev)
