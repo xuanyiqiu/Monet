@@ -3,7 +3,7 @@
 Legend: `[ ]` todo · `[~] (branch)` in progress · `[x]` done. Work top-down within your area. Acceptance criteria (AC) define "done".
 
 ## API (`services/api`) — owner: api agent
-- [~] (main) A-01 Core annotate pipeline: tokenize, pinyin, lexicon detection, LLM (fake/gemini/openai_compat), cache, `/v1/annotate`, `/v1/annotate/lines`, health, auth(dev), problem+json. AC: pytest green, contract conformance test.
+- [x] A-01 Core annotate pipeline: tokenize, pinyin, lexicon detection, LLM (fake/gemini/openai_compat), cache, `/v1/annotate`, `/v1/annotate/lines`, health, auth(dev), problem+json. AC: pytest green, contract conformance test.
 - [ ] A-02 `scripts/fetch_data.py`: download chinese-xinhua idioms → `data/generated/chengyu.json`. AC: ≥30k entries, loader test.
 - [ ] A-03 Dev playground `/playground` (dev only): textarea, langs, renders annotation. AC: manual check via screenshot.
 - [ ] A-04 Documents: upload (magic-byte validation), PDF (PyMuPDF blocks+bbox) / DOCX / TXT extraction, in-process job runner, pages endpoint. AC: tests with generated PDF incl. Chinese.

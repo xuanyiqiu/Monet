@@ -10,3 +10,4 @@ Append newest at the bottom. Keep entries short: what was done, what's next, got
 
 ## Log
 - 2026-10-10 · setup · Portable toolchain in `.tools` (bootstrap.ps1), DB guard hook, docs (PRODUCT, ARCHITECTURE, DESIGN_SYSTEM), contract v0.1.0, backlog. API A-01 in progress on main.
+- 2026-10-10 · api · A-01 done: annotate pipeline (jieba + pypinyin w/ word context, lexicon matcher for 成语/梗/歇后语/es+en idioms, grounded LLM prompts, fake/gemini/openai_compat providers, tiered cache, degraded mode), `/v1/health|me|annotate|annotate/lines|feedback`, problem+json, dev auth, rate limit, contract-conformance test. 48 tests. Note: a translation of "" means the LLM was unavailable (see `note`). Next: A-02 chengyu data, A-03 playground.

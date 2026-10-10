@@ -8,6 +8,7 @@ import logging
 import re
 from collections.abc import Iterable
 from dataclasses import dataclass
+from pathlib import Path
 
 import jieba
 
@@ -41,8 +42,11 @@ def _kind(tok: str) -> TokenKind:
 
 
 class Tokenizer:
-    def __init__(self, extra_words: Iterable[str] = ()) -> None:
+    def __init__(self, extra_words: Iterable[str] = (), cache_dir: Path | None = None) -> None:
         self._jieba = jieba.Tokenizer()
+        self._jieba.tmp_dir = str(cache_dir) if cache_dir else None
+        if cache_dir:
+            cache_dir.mkdir(parents=True, exist_ok=True)
         self._jieba.initialize()
         n = 0
         for w in extra_words:

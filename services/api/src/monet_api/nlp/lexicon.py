@@ -17,6 +17,13 @@ from monet_api.schemas import ExpressionKind, Lang
 log = logging.getLogger(__name__)
 
 _XHY_SEPARATORS = ("——", "—", "--", "，", ",", "")
+# Latin-only word boundary: Python's \b treats Han characters as word chars, so "的no cap" would not match.
+_L = "0-9A-Za-zÀ-ÖØ-öø-ÿ"
+_BOUNDARY = f"(?:(?<![{_L}])(?=[{_L}])|(?<=[{_L}])(?![{_L}]))"
+
+
+def _latin_pattern(phrase: str) -> str:
+    return r"\b" + r"\s+".join(map(re.escape, phrase.split())) + r"\b"
 
 
 @dataclass(frozen=True, slots=True)
@@ -76,9 +83,8 @@ class Lexicon:
                     seen.add(key)
                     self._zh[form[0].lower()].append((form.lower(), e))
             else:
-                pattern = e.regex or r"\b" + r"\s+".join(map(re.escape, e.term.split())) + r"\b"
-                for v in e.variants:
-                    pattern += "|" + r"\b" + r"\s+".join(map(re.escape, v.split())) + r"\b"
+                pattern = "|".join([e.regex or _latin_pattern(e.term), *map(_latin_pattern, e.variants)])
+                pattern = pattern.replace(r"\b", _BOUNDARY)
                 self._latin[e.lang].append((re.compile(pattern, re.IGNORECASE), e))
         for forms in self._zh.values():
             forms.sort(key=lambda f: len(f[0]), reverse=True)
@@ -98,7 +104,9 @@ class Lexicon:
             # Mixed text (e.g. "我emo了", "no cap 绝绝子"): also look for latin slang.
             latin = [m for lg in (Lang.en, Lang.es) for m in self._find_latin(text, lg)]
             return _resolve_overlaps(matches + latin)
-        return self._find_latin(text, lang)
+        # Chinese internet slang is often typed in Latin letters/digits (yyds, 520) inside any language.
+        zh_ascii = [m for m in self._find_zh(text) if not m.entry.ambiguous]
+        return _resolve_overlaps(self._find_latin(text, lang) + zh_ascii)
 
     def _find_zh(self, text: str) -> list[Match]:
         low = text.lower()

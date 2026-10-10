@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     database_url: str | None = None  # postgresql+asyncpg://monet:monet@localhost:54329/monet
     redis_url: str | None = None
     blob_dir: Path = REPO_ROOT / ".data" / "blobs"
+    cache_dir: Path = REPO_ROOT / ".data" / "cache"
 
     # Data
     lexicon_dir: Path = API_ROOT / "data" / "lexicon"

@@ -10,6 +10,7 @@ Read first: `docs/PRODUCT.md` (what), `docs/ARCHITECTURE.md` (how), `docs/DESIGN
 - `contracts/openapi.yaml` is the API source of truth. Do not change it in a feature branch; if you need a change, write it in `docs/PROGRESS.md` under "Contract requests" and stop that part.
 - Stay in your area: Android agent edits `apps/android/**`; API agent edits `services/api/**`. Shared docs: only append to `docs/PROGRESS.md`.
 - Never commit secrets (`.env`, keys). Never force-push. Never rewrite `main` history.
+- **No AI attribution anywhere**: no `Co-Authored-By: Claude…`, no "Generated with Claude Code" in commits, PRs, code or docs. Plain Conventional Commits only.
 
 ## Workflow (every task)
 1. Pick the first unchecked task for your area in `docs/BACKLOG.md`; mark it `[~]` with your branch name.

@@ -14,10 +14,7 @@ def normalize(text: str) -> str:
 def is_han(ch: str) -> bool:
     cp = ord(ch)
     return (
-        0x4E00 <= cp <= 0x9FFF
-        or 0x3400 <= cp <= 0x4DBF
-        or 0xF900 <= cp <= 0xFAFF
-        or 0x20000 <= cp <= 0x2FA1F
+        0x4E00 <= cp <= 0x9FFF or 0x3400 <= cp <= 0x4DBF or 0xF900 <= cp <= 0xFAFF or 0x20000 <= cp <= 0x2FA1F
     )
 
 
