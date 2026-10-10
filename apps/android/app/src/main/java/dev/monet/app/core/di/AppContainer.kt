@@ -50,4 +50,13 @@ private class SwitchingMonetApi(
     override suspend fun getDocument(id: String) = target().getDocument(id)
     override suspend fun deleteDocument(id: String) = target().deleteDocument(id)
     override suspend fun getDocumentPage(id: String, index: Int) = target().getDocumentPage(id, index)
+    override suspend fun uploadDocument(
+        fileName: String,
+        mimeType: String,
+        bytes: ByteArray,
+        targetLang: dev.monet.app.core.network.Lang,
+        sourceLang: dev.monet.app.core.network.SourceLang,
+        title: String?,
+    ) = target().uploadDocument(fileName, mimeType, bytes, targetLang, sourceLang, title)
+    override suspend fun downloadDocument(id: String) = target().downloadDocument(id)
 }
