@@ -1,6 +1,7 @@
 import httpx
 
 from monet_api.llm.base import LLMError, parse_json_object
+from monet_api.llm.http import post_with_retry
 
 
 class OpenAICompatProvider:
@@ -30,12 +31,7 @@ class OpenAICompatProvider:
             "temperature": self._temperature,
             "response_format": {"type": "json_object"},
         }
-        try:
-            r = await self._client.post(self._url, json=body, headers=self._headers)
-        except httpx.HTTPError as e:
-            raise LLMError(f"llm request failed: {e}") from e
-        if r.status_code != 200:
-            raise LLMError(f"llm HTTP {r.status_code}: {r.text[:300]}")
+        r = await post_with_retry(self._client, self._url, json=body, headers=self._headers, label="llm")
         try:
             content = r.json()["choices"][0]["message"]["content"]
         except (KeyError, IndexError, ValueError) as e:

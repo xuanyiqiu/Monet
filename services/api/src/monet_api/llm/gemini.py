@@ -1,6 +1,7 @@
 import httpx
 
 from monet_api.llm.base import LLMError, parse_json_object
+from monet_api.llm.http import post_with_retry
 
 _URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 
@@ -15,8 +16,10 @@ class GeminiProvider:
         timeout_s: float,
         temperature: float,
         client: httpx.AsyncClient | None = None,
+        thinking_budget: int | None = None,
     ) -> None:
         self.model = model
+        self._thinking_budget = thinking_budget
         self._key = api_key
         self._temperature = temperature
         self._client = client or httpx.AsyncClient(timeout=timeout_s)
@@ -27,14 +30,15 @@ class GeminiProvider:
             "contents": [{"role": "user", "parts": [{"text": user}]}],
             "generationConfig": {"responseMimeType": "application/json", "temperature": self._temperature},
         }
-        try:
-            r = await self._client.post(
-                _URL.format(model=self.model), json=body, headers={"x-goog-api-key": self._key}
-            )
-        except httpx.HTTPError as e:
-            raise LLMError(f"gemini request failed: {e}") from e
-        if r.status_code != 200:
-            raise LLMError(f"gemini HTTP {r.status_code}: {r.text[:300]}")
+        if self._thinking_budget is not None:
+            body["generationConfig"]["thinkingConfig"] = {"thinkingBudget": self._thinking_budget}
+        r = await post_with_retry(
+            self._client,
+            _URL.format(model=self.model),
+            json=body,
+            headers={"x-goog-api-key": self._key},
+            label="gemini",
+        )
         try:
             parts = r.json()["candidates"][0]["content"]["parts"]
         except (KeyError, IndexError, ValueError) as e:
