@@ -57,6 +57,7 @@ class LensOverlayActions(
     val onDragEnd: () -> Unit,
     val onMode: (LensMode) -> Unit,
     val onLines: (Int) -> Unit,
+    val onRead: () -> Unit,
 )
 
 val BubbleSize = 48.dp
@@ -156,6 +157,7 @@ private fun ModePill(state: LensUiState, actions: LensOverlayActions) {
             Segment("Select", state.mode == LensMode.SELECT, Modifier.weight(1f)) { actions.onMode(LensMode.SELECT) }
             Segment("Off", false, Modifier.weight(1f)) { actions.onMode(LensMode.OFF) }
         }
+        Segment("Read screen now", false, Modifier.fillMaxWidth()) { actions.onRead() }
         Row(
             Modifier.fillMaxWidth().padding(horizontal = Spacing.x2),
             verticalAlignment = Alignment.CenterVertically,
@@ -207,7 +209,7 @@ private fun StepButton(glyph: String, description: String, enabled: Boolean, onC
     }
 }
 
-private val previewActions = LensOverlayActions({}, {}, { _, _ -> }, { _, _ -> }, {}, {}, {})
+private val previewActions = LensOverlayActions({}, {}, { _, _ -> }, { _, _ -> }, {}, {}, {}, {})
 
 @Preview(name = "Lens expanded light", showBackground = true, widthDp = 320, heightDp = 220)
 @Composable

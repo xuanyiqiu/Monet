@@ -1,7 +1,9 @@
 package dev.monet.app
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
+import android.media.projection.MediaProjectionManager
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import dev.monet.app.feature.lens.LensState
@@ -38,9 +40,25 @@ import dev.monet.app.ui.theme.MonetTheme
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
 
-    // Notifications are optional: start the lens whatever the answer is.
+    // The user must approve screen capture every time the lens starts (Android shows its own dialog).
+    private val captureConsent =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            val data = result.data
+            if (result.resultCode == RESULT_OK && data != null) {
+                startLens(this, result.resultCode, data)
+            } else {
+                Toast.makeText(this, "Allow screen capture so Monet can read other apps.", Toast.LENGTH_LONG).show()
+            }
+        }
+
+    private fun requestCapture() {
+        val manager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+        captureConsent.launch(manager.createScreenCaptureIntent())
+    }
+
+    // Notifications are optional: continue to the capture consent whatever the answer is.
     private val notificationPermission =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { startLens(this) }
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { requestCapture() }
 
     private fun toggleLens() {
         when {
@@ -50,7 +68,7 @@ class MainActivity : ComponentActivity() {
                 startActivity(overlaySettingsIntent(this))
             }
             needsNotificationPermission(this) -> notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
-            else -> startLens(this)
+            else -> requestCapture()
         }
     }
 

@@ -11,6 +11,7 @@ data class LensUiState(
     val running: Boolean = false,
     val mode: LensMode = LensMode.AUTO,
     val linesPerStep: Int = 2,
+    val lastRead: List<dev.monet.app.feature.lens.capture.TextBlock> = emptyList(),
 )
 
 /** Process-wide state shared by the overlay service and the app UI. */
