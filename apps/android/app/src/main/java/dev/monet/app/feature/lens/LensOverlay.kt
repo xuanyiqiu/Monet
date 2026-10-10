@@ -59,6 +59,9 @@ class LensOverlayActions(
     val onLines: (Int) -> Unit,
     val onRead: () -> Unit,
     val onSelect: () -> Unit,
+    val onPrev: () -> Unit,
+    val onNext: () -> Unit,
+    val onStopReading: () -> Unit,
 )
 
 val BubbleSize = 48.dp
@@ -160,8 +163,29 @@ private fun ModePill(state: LensUiState, actions: LensOverlayActions) {
         }
         if (state.mode == LensMode.SELECT) {
             Segment("Select on screen", false, Modifier.fillMaxWidth()) { actions.onSelect() }
+        } else if (state.reading == null) {
+            Segment("Start reading", false, Modifier.fillMaxWidth()) { actions.onRead() }
         } else {
-            Segment("Read screen now", false, Modifier.fillMaxWidth()) { actions.onRead() }
+            val reading = state.reading
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.x1),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Segment("Back", false, Modifier.weight(1f), enabled = reading.hasPrev) { actions.onPrev() }
+                Text(
+                    reading.label,
+                    style = Monet.type.label,
+                    color = c.inkMuted,
+                    modifier = Modifier.weight(1.2f).padding(horizontal = Spacing.x1),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                )
+                Segment("Next", false, Modifier.weight(1f), enabled = reading.hasNext) { actions.onNext() }
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Spacing.x1)) {
+                Segment("Read again", false, Modifier.weight(1f)) { actions.onRead() }
+                Segment("Stop", false, Modifier.weight(1f)) { actions.onStopReading() }
+            }
         }
         Row(
             Modifier.fillMaxWidth().padding(horizontal = Spacing.x2),
@@ -183,7 +207,13 @@ private fun ModePill(state: LensUiState, actions: LensOverlayActions) {
 }
 
 @Composable
-private fun Segment(label: String, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
+private fun Segment(
+    label: String,
+    selected: Boolean,
+    modifier: Modifier,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+) {
     val c = Monet.colors
     val shape = RoundedCornerShape(Radius.sm)
     Box(
@@ -193,10 +223,14 @@ private fun Segment(label: String, selected: Boolean, modifier: Modifier, onClic
             .background(if (selected) c.sealSoft else androidx.compose.ui.graphics.Color.Transparent)
             .border(1.dp, if (selected) c.seal else c.hairline, shape)
             .semantics { role = Role.RadioButton; this.selected = selected }
-            .clickable(onClick = onClick),
+            .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Text(label, style = Monet.type.label, color = if (selected) c.seal else c.ink)
+        Text(
+            label,
+            style = Monet.type.label,
+            color = if (!enabled) c.inkFaint else if (selected) c.seal else c.ink,
+        )
     }
 }
 
@@ -214,7 +248,7 @@ private fun StepButton(glyph: String, description: String, enabled: Boolean, onC
     }
 }
 
-private val previewActions = LensOverlayActions({}, {}, { _, _ -> }, { _, _ -> }, {}, {}, {}, {}, {})
+private val previewActions = LensOverlayActions({}, {}, { _, _ -> }, { _, _ -> }, {}, {}, {}, {}, {}, {}, {}, {})
 
 @Preview(name = "Lens expanded light", showBackground = true, widthDp = 320, heightDp = 220)
 @Composable
