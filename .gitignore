@@ -41,3 +41,4 @@ Thumbs.db
 
 # Generated data (fetched by scripts/fetch_data.py)
 services/api/data/raw/
+services/api/data/generated/

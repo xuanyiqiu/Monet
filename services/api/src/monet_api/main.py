@@ -1,7 +1,9 @@
 import logging
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 
 from monet_api import __version__, errors
 from monet_api.annotator import Annotator
@@ -14,6 +16,7 @@ from monet_api.nlp.tokenize import Tokenizer
 from monet_api.routers import core
 
 log = logging.getLogger("monet")
+_STATIC = Path(__file__).parent / "static"
 
 _shared: dict[str, object] = {}
 
@@ -51,6 +54,13 @@ def create_app(settings: Settings | None = None, llm: LLMProvider | None = None)
             CORSMiddleware, allow_origins=settings.cors_origins, allow_methods=["*"], allow_headers=["*"]
         )
     app.include_router(core.router)
+
+    if settings.auth_mode == "dev":
+
+        @app.get("/playground", include_in_schema=False)
+        async def playground() -> FileResponse:
+            return FileResponse(_STATIC / "playground.html")
+
     return app
 
 

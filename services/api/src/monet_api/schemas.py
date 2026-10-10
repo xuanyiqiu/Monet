@@ -1,5 +1,6 @@
 """Pydantic models mirroring contracts/openapi.yaml. Keep names and fields in sync with the contract."""
 
+import warnings
 from datetime import datetime
 from enum import StrEnum
 from typing import Annotated
@@ -50,6 +51,10 @@ class ExpressionSource(StrEnum):
     dictionary = "dictionary"
     model = "model"
     both = "both"
+
+
+# `Expression.register` is a contract field name; shadowing ABCMeta.register on instances is harmless.
+warnings.filterwarnings("ignore", message='Field name "register"', category=UserWarning)
 
 
 class _Model(BaseModel):
