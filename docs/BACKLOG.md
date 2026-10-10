@@ -15,7 +15,7 @@ Legend: `[ ]` todo · `[~] (branch)` in progress · `[x]` done. Work top-down wi
 
 ## Android (`apps/android`) — owner: android agent
 - [x] F-01 Project scaffold: Gradle KTS + version catalog, minSdk 26, target/compile 35, Compose, theme from DESIGN_SYSTEM (tokens, fonts via downloadable fonts), light/dark. AC: `assembleDebug` green, screenshot of theme preview on emulator.
-- [ ] F-02 Network layer: kotlinx.serialization DTOs mirroring `contracts/openapi.yaml`, Retrofit `MonetApi`, `FakeMonetApi` with realistic sample data (memes, 成语), `AppContainer` DI, settings (DataStore). AC: unit tests for DTO parsing of contract examples.
+- [x] F-02 Network layer: kotlinx.serialization DTOs mirroring `contracts/openapi.yaml`, Retrofit `MonetApi`, `FakeMonetApi` with realistic sample data (memes, 成语), `AppContainer` DI, settings (DataStore). AC: unit tests for DTO parsing of contract examples.
 - [ ] F-03 Detail sheet: Meaning / Breakdown (ruby pinyin, tone colors, IPA) / Why-it-says-that cards; TTS play + slow; save/copy. AC: works with FakeMonetApi; screenshots light+dark.
 - [ ] F-04 Home: paste/type text + receive `ACTION_SEND`/`PROCESS_TEXT` from other apps → Detail sheet. AC: `adb shell am start` share intent test.
 - [ ] F-05 Settings screen (target lang, pinyin style, lines per step, theme). AC: persisted, unit tests.
