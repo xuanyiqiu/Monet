@@ -224,7 +224,7 @@
   text: He kept ghosting me for weeks.
   target: zh
   expect_dict: [ghosting]
-  tr_any: [消失, 已读不回, 不理, 冷落, 鸽, 失联, 不回, 避而不见, 不联系, 冷暴力]
+  tr_any: [消失, 失踪, 已读不回, 不理, 冷落, 鸽, 失联, 不回, 避而不见, 不联系, 冷暴力]
 - id: en-plain
   text: The meeting starts at nine tomorrow.
   target: es

@@ -7,6 +7,7 @@ the background (`progress` keeps rising to 1.0); a page requested before that is
 
 import asyncio
 import logging
+from typing import Protocol
 from uuid import UUID, uuid4
 
 from monet_api.annotator import Annotator
@@ -35,8 +36,23 @@ MIME = {
 }
 
 
+PROCESS_JOB = "process_document"
+
+
+class JobEnqueuer(Protocol):
+    async def enqueue(self, kind: str, payload: dict, max_attempts: int = 3) -> UUID: ...
+
+
 class DocumentService:
-    def __init__(self, repo: DocumentRepo, blobs: BlobStore, annotator: Annotator, max_pages: int) -> None:
+    def __init__(
+        self,
+        repo: DocumentRepo,
+        blobs: BlobStore,
+        annotator: Annotator,
+        max_pages: int,
+        queue: JobEnqueuer | None = None,
+    ) -> None:
+        self.queue = queue
         self.repo = repo
         self.blobs = blobs
         self.annotator = annotator
@@ -72,9 +88,12 @@ class DocumentService:
         key = f"{owner}/{doc_id}.{kind.value}"
         await self.blobs.put(key, data)
         await self.repo.add(DocRecord(doc=doc, owner=owner, blob_key=key, mime=MIME[kind]))
-        task = asyncio.create_task(self._process(doc_id))
-        self._tasks.add(task)
-        task.add_done_callback(self._tasks.discard)
+        if self.queue is not None:
+            await self.queue.enqueue(PROCESS_JOB, {"doc_id": str(doc_id)})  # durable; the worker runs it
+        else:
+            task = asyncio.create_task(self.process(doc_id))
+            self._tasks.add(task)
+            task.add_done_callback(self._tasks.discard)
         return doc
 
     async def delete(self, rec: DocRecord) -> None:
@@ -105,7 +124,9 @@ class DocumentService:
 
     # ------------------------------------------------------------------ pipeline
 
-    async def _process(self, doc_id: UUID) -> None:
+    async def process(self, doc_id: UUID, last_attempt: bool = True) -> None:
+        """Extract and annotate a document. Idempotent. With a queue, unexpected errors re-raise
+        (so the job is retried) until `last_attempt`, when the document is marked failed."""
         rec = await self.repo.get(doc_id)
         if rec is None:
             return
@@ -128,6 +149,8 @@ class DocumentService:
             await self.repo.update(doc_id, status=DocumentStatus.failed, error=str(e))
         except Exception:
             log.exception("document %s failed", doc_id)
+            if self.queue is not None and not last_attempt:
+                raise
             await self.repo.update(
                 doc_id, status=DocumentStatus.failed, error="Processing failed. Try again."
             )
