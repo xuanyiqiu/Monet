@@ -1,24 +1,24 @@
 # Golden-set evaluation
 
-- Date: 2026-10-11 · Model: `gemini-3.5-flash` · 43 cases · 265 s
-- **Cases passed: 41/43 (95%)**
+- Date: 2026-10-11 · Model: `gemini-3.5-flash` · 43 cases · 263 s
+- **Cases passed: 43/43 (100%)**
 - Translation returned: 43/43
 - Expression recall: 43/43 (100%)
-- False positives rejected: 2/3
-- Translation keyword check (no calques): 42/43
+- False positives rejected: 3/3
+- Translation keyword check (no calques): 43/43
 
 Regenerate with `uv run python scripts/eval_golden.py` (needs an LLM key in `.env`).
 
 | Case | OK | Translation | Notes |
 |---|---|---|---|
 | zh-meme-work-complaint | ✓ | Guys, I can't even—my boss is making empty promises again. |  |
-| zh-homophone-bengbu | ✓ | I literally couldn't hold it together. |  |
+| zh-homophone-bengbu | ✓ | I literally can't hold it together. |  |
 | zh-number-slang-price | ✓ | This sells for 666 yuan, it's too expensive. |  |
-| zh-number-slang-praise | ✓ | Awesome! That move was incredibly skillful. |  |
-| zh-number-price-total | ✗ | It's 666 yuan total, I can't go any lower. | false positive: 666 |
+| zh-number-slang-praise | ✓ | Awesome, that move was so impressive. |  |
+| zh-number-price-total | ✓ | That's 666 yuan total, I can't go any lower. |  |
 | zh-abbrev-yyds | ✓ | This streamer is the GOAT! |  |
 | zh-chengyu-duiniu | ✓ | Trying to reason with him is like casting pearls before swine. |  |
-| zh-chengyu-huashe | ✗ | Making those changes will only be counterproductive. | keyword check failed |
+| zh-chengyu-huashe | ✓ | Making those changes will only be counterproductive. |  |
 | zh-chengyu-yiju | ✓ | Este plan mata dos pájaros de un tiro y todos están satisfechos. |  |
 | zh-single-char-trap | ✓ | The company's profits are very high. |  |
 | zh-emo | ✓ | I'm feeling a bit down today. |  |
@@ -27,9 +27,9 @@ Regenerate with `uv run python scripts/eval_golden.py` (needs an LLM key in `.en
 | zh-thank-you-pun | ✓ | My boss wants me to work this weekend again, thanks for nothing. |  |
 | zh-number-520 | ✓ | Today is May 20th, I love you. |  |
 | zh-xiehouyu | ✓ | He does this every single day; it's the same old story. |  |
-| zh-literary-allusion | ✓ | He is too proud to lower himself, still clinging to the status of an educated elite. |  |
+| zh-literary-allusion | ✓ | He refuses to lower his pride, still clinging to the elitism of his degree. |  |
 | zh-triple-trend | ✓ | Los jóvenes están optando por no esforzarse y dejarse llevar, pero todavía hay quienes siguen atrapados en la competencia feroz. |  |
-| zh-teasing-es | ✓ | Es todo un payaso, siempre llamando la atención. |  |
+| zh-teasing-es | ✓ | Es un payaso, siempre llamando la atención. |  |
 | zh-worker | ✓ | Wage slave, wage slave soul, good morning. |  |
 | zh-plain-sentence | ✓ | Excuse me, how do I get to the nearest subway station? |  |
 | es-idiom-nubes | ✓ | He is daydreaming and has no idea what is going on. |  |
@@ -41,7 +41,7 @@ Regenerate with `uv run python scripts/eval_golden.py` (needs an LLM key in `.en
 | es-idiom-calabazas | ✓ | He was rejected at the party. |  |
 | es-slang-mola | ✓ | This is really cool. |  |
 | es-idiom-pegar-ojo | ✓ | I didn't sleep a wink last night. |  |
-| es-idiom-ojo-cara | ✓ | 那块表贵得离谱。 |  |
+| es-idiom-ojo-cara | ✓ | 那块手表贵得离谱。 |  |
 | es-plain | ✓ | 火车站怎么走？ |  |
 | en-slang-tea-cap | ✓ | Ella soltó el chisme, sin mentiras. |  |
 | en-meme-grass | ✓ | Hermano, sal a que te dé el aire. |  |
@@ -52,5 +52,5 @@ Regenerate with `uv run python scripts/eval_golden.py` (needs an LLM key in `.en
 | en-idiom-bush | ✓ | Deja de andarte con rodeos y dímelo. |  |
 | en-slang-lowkey | ✓ | 我有点厌倦这一切了。 |  |
 | en-slang-mid | ✓ | Sinceramente, esa película fue mediocre. |  |
-| en-slang-ghosting | ✓ | 他好几周都没理我，玩消失。 |  |
+| en-slang-ghosting | ✓ | 他好几周都没理我，玩失踪。 |  |
 | en-plain | ✓ | La reunión comienza mañana a las nueve. |  |
