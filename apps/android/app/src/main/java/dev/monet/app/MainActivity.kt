@@ -1,6 +1,15 @@
 package dev.monet.app
 
+import android.Manifest
 import android.content.Intent
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import dev.monet.app.feature.lens.LensState
+import dev.monet.app.feature.lens.canDrawOverlays
+import dev.monet.app.feature.lens.needsNotificationPermission
+import dev.monet.app.feature.lens.overlaySettingsIntent
+import dev.monet.app.feature.lens.startLens
+import dev.monet.app.feature.lens.stopLens
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -28,6 +37,22 @@ import dev.monet.app.ui.theme.MonetTheme
 
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
+
+    // Notifications are optional: start the lens whatever the answer is.
+    private val notificationPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { startLens(this) }
+
+    private fun toggleLens() {
+        when {
+            LensState.state.value.running -> stopLens(this)
+            !canDrawOverlays(this) -> {
+                Toast.makeText(this, "Allow \"Display over other apps\" for Monet, then come back.", Toast.LENGTH_LONG).show()
+                startActivity(overlaySettingsIntent(this))
+            }
+            needsNotificationPermission(this) -> notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+            else -> startLens(this)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,7 +94,13 @@ class MainActivity : ComponentActivity() {
                         ),
                     )
                 } else {
-                    HomeScreen(onExplain = viewModel::explain, onOpenSettings = viewModel::openSettings)
+                    val lens by LensState.state.collectAsStateWithLifecycle()
+                    HomeScreen(
+                        onExplain = viewModel::explain,
+                        onOpenSettings = viewModel::openSettings,
+                        lensRunning = lens.running,
+                        onToggleLens = ::toggleLens,
+                    )
                 }
                 sheetText?.let { DetailSheet(text = it, onDismiss = viewModel::dismiss) }
             }
