@@ -33,8 +33,9 @@ class ScreenCapturer(context: Context, resultCode: Int, resultData: Intent) {
         projection.registerCallback(object : MediaProjection.Callback() {}, handler)
 
         val metrics = context.resources.displayMetrics
-        width = metrics.widthPixels
-        height = metrics.heightPixels
+        val size = realDisplaySize(context)
+        width = size.first
+        height = size.second
         reader = ImageReader.newInstance(width, height, PixelFormat.RGBA_8888, 2)
         display = projection.createVirtualDisplay(
             "monet-lens",
@@ -66,5 +67,18 @@ class ScreenCapturer(context: Context, resultCode: Int, resultData: Intent) {
         display.release()
         reader.close()
         projection.stop()
+    }
+}
+
+/** Full display size in pixels, including the status and navigation bars. */
+fun realDisplaySize(context: Context): Pair<Int, Int> {
+    val wm = context.getSystemService(Context.WINDOW_SERVICE) as android.view.WindowManager
+    return if (android.os.Build.VERSION.SDK_INT >= 30) {
+        wm.maximumWindowMetrics.bounds.let { it.width() to it.height() }
+    } else {
+        val m = android.util.DisplayMetrics()
+        @Suppress("DEPRECATION")
+        wm.defaultDisplay.getRealMetrics(m)
+        m.widthPixels to m.heightPixels
     }
 }

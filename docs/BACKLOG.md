@@ -21,7 +21,7 @@ Legend: `[ ]` todo · `[~] (branch)` in progress · `[x]` done. Work top-down wi
 - [x] F-05 Settings screen (target lang, pinyin style, lines per step, theme). AC: persisted, unit tests.
 - [x] F-06 Lens permissions + bubble overlay (foreground service, SYSTEM_ALERT_WINDOW), mode pill. AC: bubble shows over launcher on emulator.
 - [x] F-07 Screen capture (MediaProjection) + ML Kit OCR (zh+latin) + line grouping. AC: unit tests on grouping, OCR test on a fixture bitmap.
-- [~] (feat/android) F-08 Select mode: freeze frame, drag selection, translate selection card. AC: works end-to-end against local API.
+- [x] F-08 Select mode: freeze frame, drag selection, translate selection card. AC: works end-to-end against local API.
 - [ ] F-09 Auto mode + reading band (N lines per step, next/prev, dim read lines). AC: logic unit-tested; screenshot.
 - [ ] F-10 Library + Reader (PdfRenderer + overlay from pages endpoint, reflow reader for docx/txt).
 - [ ] F-11 Onboarding.
