@@ -14,6 +14,12 @@ class MainViewModel : ViewModel() {
         normalizeIncoming(raw)?.let { _sheetText.value = it }
     }
 
+    private val _showSettings = MutableStateFlow(false)
+    val showSettings: StateFlow<Boolean> = _showSettings.asStateFlow()
+
+    fun openSettings() { _showSettings.value = true }
+    fun closeSettings() { _showSettings.value = false }
+
     fun dismiss() {
         _sheetText.value = null
     }
