@@ -139,3 +139,21 @@ def test_full_chengyu_lexicon_loads():
     assert len(lex) > 30_000
     found = [m.text for m in lex.find("他总是自以为是，结果画蛇添足，一举两得", Lang.zh)]
     assert found == ["自以为是", "画蛇添足", "一举两得"]
+
+
+@pytest.mark.parametrize(
+    ("text", "slang"),
+    [
+        ("这个卖666元", False),
+        ("一共666块", False),
+        ("总共520人参加", False),
+        ("售价￥233", False),
+        ("花了886", False),
+        ("666，这波操作太秀了", True),
+        ("今天是520，我爱你", True),
+        ("233333", True),
+    ],
+)
+def test_digit_slang_vs_quantities(nlp, annotator, text, slang):
+    found = [m.text for m in annotator.analyze(text, Lang.zh).matches]
+    assert bool(found) is slang, f"{text}: {found}"

@@ -63,6 +63,23 @@ class Match:
     text: str
 
 
+_UNITS_AFTER = re.compile(
+    r"^\s*(?:元|块|块钱|毛|角|分钟|小时|个|只|条|次|年|月|号|日|岁|斤|公斤|米|公里|人民币|rmb|usd|yuan|dollars?|euros?|%|％)",
+    re.I,
+)
+_CONTEXT_BEFORE = re.compile(
+    r"(?:一共|共计|总共|共|约|大约|售价|价格|价|花了|花|付了|付|收了|收|[￥¥$€])\s*$"
+)
+
+
+def is_quantity(text: str, start: int, end: int) -> bool:
+    """True if an all-digit span is used as a plain quantity or price (666元, 一共666, ¥520), not as slang."""
+    span = text[start:end]
+    if not span.isascii() or not span.isdigit():
+        return False
+    return bool(_UNITS_AFTER.match(text[end:]) or _CONTEXT_BEFORE.search(text[:start]))
+
+
 def _is_ascii_alnum(ch: str) -> bool:
     return ch.isascii() and ch.isalnum()
 

@@ -20,7 +20,8 @@ class Settings(BaseSettings):
 
     # Auth: "dev" accepts `Bearer dev:<user-id>`; "supabase" verifies Supabase JWTs.
     auth_mode: Literal["dev", "supabase"] = "dev"
-    supabase_jwt_secret: str | None = None
+    supabase_jwt_secret: str | None = None  # HS256 projects
+    supabase_url: str | None = None  # https://<ref>.supabase.co ; enables ES256/RS256 via JWKS
     supabase_jwt_audience: str = "authenticated"
 
     # LLM

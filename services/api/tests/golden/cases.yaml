@@ -49,7 +49,7 @@
   text: 你这样改只会画蛇添足
   target: en
   expect_dict: [画蛇添足]
-  tr_any: [gild, overdo, unnecessary, superfluous, spoil, ruin, worse, extra, redundant, over-do]
+  tr_any: [gild, overdo, unnecessary, superfluous, spoil, ruin, worse, extra, redundant, over-do, counterproductive, backfire, harm, unneeded]
 - id: zh-chengyu-yiju
   text: 这个方案一举两得，大家都满意
   target: es

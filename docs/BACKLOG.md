@@ -9,8 +9,8 @@ Legend: `[ ]` todo · `[~] (branch)` in progress · `[x]` done. Work top-down wi
 - [x] A-04 Documents: upload (magic-byte validation), PDF (PyMuPDF blocks+bbox) / DOCX / TXT extraction, in-process job runner, pages endpoint. AC: tests with generated PDF incl. Chinese.
 - [x] A-05 Postgres repo (SQLAlchemy async) + docker-compose `db` on 54329 + Alembic. AC: `-m db` tests pass against monet-db.
 - [x] A-06 Postgres job queue (SKIP LOCKED, retries/backoff). AC: concurrency test.
-- [ ] A-07 Golden set (`tests/golden/*.yaml`) + live eval script with score report. AC: report in docs.
-- [ ] A-08 Supabase JWT auth + per-user rate limit. AC: tests with signed tokens.
+- [x] A-07 Golden set (`tests/golden/*.yaml`) + live eval script with score report. AC: report in docs.
+- [x] A-08 Supabase JWT auth + per-user rate limit. AC: tests with signed tokens.
 - [x] A-09 Dockerfile + Cloud Run deploy notes. AC: image builds.
 
 ## Android (`apps/android`) — owner: android agent
