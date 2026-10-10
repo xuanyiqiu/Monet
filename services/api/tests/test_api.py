@@ -99,3 +99,15 @@ def test_playground_served_in_dev(client):
     r = client.get("/playground")
     assert r.status_code == 200
     assert "Monet" in r.text
+
+
+def test_feedback_is_stored(client):
+    for text in ("绝绝子", "绝绝子", "蚌埠住了"):
+        r = client.post(
+            "/v1/feedback", headers=AUTH, json={"text": text, "target_lang": "en", "comment": "bad"}
+        )
+        assert r.status_code == 202
+    import asyncio
+
+    top = asyncio.run(client.app.state.feedback.top_reported())
+    assert top == [("绝绝子", 2), ("蚌埠住了", 1)]

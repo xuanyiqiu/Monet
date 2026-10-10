@@ -7,6 +7,7 @@ from monet_api import __version__
 from monet_api.annotator import Annotator, EmptyTextError
 from monet_api.auth import current_user, rate_limited_user
 from monet_api.errors import Problem
+from monet_api.feedback import FeedbackItem
 from monet_api.schemas import (
     AnnotateLinesRequest,
     AnnotateLinesResponse,
@@ -53,6 +54,17 @@ async def annotate_lines(
 
 
 @router.post("/feedback", status_code=202, operation_id="sendFeedback")
-async def feedback(body: FeedbackRequest, user: str = Depends(rate_limited_user)) -> Response:
+async def feedback(
+    body: FeedbackRequest, request: Request, user: str = Depends(rate_limited_user)
+) -> Response:
     feedback_log.info(json.dumps({"user": user, **body.model_dump(mode="json")}, ensure_ascii=False))
+    await request.app.state.feedback.add(
+        FeedbackItem(
+            user_id=user,
+            text=body.text,
+            translation=body.translation,
+            target_lang=body.target_lang.value,
+            comment=body.comment,
+        )
+    )
     return Response(status_code=202)

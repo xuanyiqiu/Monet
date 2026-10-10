@@ -127,3 +127,19 @@ def test_full_flow_through_api_on_postgres(settings, fake_llm, pg_url, tmp_path)
         page = c.get(f"/v1/documents/{doc['id']}/pages/0", headers=AUTH).json()
         assert page["blocks"][0]["lines"][0]["annotation"]["expressions"][0]["text"] == "画大饼"
         assert c.delete(f"/v1/documents/{doc['id']}", headers=AUTH).status_code == 204
+
+
+async def test_feedback_repo_counts_reports(pg_url):
+    from monet_api.feedback import FeedbackItem
+
+    await db.upgrade(pg_url)
+    engine = db.create_engine(pg_url)
+    try:
+        async with engine.begin() as c:
+            await c.execute(sa.text("truncate feedback"))
+        repo = db.PgFeedbackRepo(engine)
+        for text in ("画大饼", "画大饼", "yyds"):
+            await repo.add(FeedbackItem(user_id="u", text=text, target_lang="en", comment="wrong"))
+        assert await repo.top_reported(5) == [("画大饼", 2), ("yyds", 1)]
+    finally:
+        await engine.dispose()

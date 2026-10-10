@@ -6,7 +6,7 @@ Schema changes go through Alembic (migrations/versions); `upgrade()` is the only
 import asyncio
 import json
 from pathlib import Path
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import sqlalchemy as sa
 from alembic import command
@@ -69,6 +69,19 @@ jobs = sa.Table(
     sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
     sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
     sa.Index("ix_jobs_claim", "status", "run_at"),
+)
+
+feedback = sa.Table(
+    "feedback",
+    metadata,
+    sa.Column("id", PG_UUID(as_uuid=True), primary_key=True),
+    sa.Column("user_id", sa.Text, nullable=False),
+    sa.Column("text", sa.Text, nullable=False),
+    sa.Column("translation", sa.Text),
+    sa.Column("target_lang", sa.Text, nullable=False),
+    sa.Column("comment", sa.Text),
+    sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+    sa.Index("ix_feedback_created", sa.text("created_at DESC")),
 )
 
 _DOC_FIELDS = [
@@ -164,6 +177,28 @@ class PgDocumentRepo:
     async def delete(self, doc_id: UUID) -> None:
         async with self.engine.begin() as c:
             await c.execute(sa.delete(documents).where(documents.c.id == doc_id))
+
+
+class PgFeedbackRepo:
+    def __init__(self, engine: AsyncEngine) -> None:
+        self.engine = engine
+
+    async def add(self, item) -> UUID:
+        fid = uuid4()
+        async with self.engine.begin() as c:
+            await c.execute(
+                sa.insert(feedback).values(
+                    id=fid, user_id=item.user_id, text=item.text, translation=item.translation,
+                    target_lang=item.target_lang, comment=item.comment, created_at=now(),
+                )
+            )  # fmt: skip
+        return fid
+
+    async def top_reported(self, limit: int = 20) -> list[tuple[str, int]]:
+        n = sa.func.count().label("n")
+        q = sa.select(feedback.c.text, n).group_by(feedback.c.text).order_by(n.desc()).limit(limit)
+        async with self.engine.connect() as c:
+            return [(t, int(k)) for t, k in (await c.execute(q)).all()]
 
 
 def migrations_dir() -> Path:

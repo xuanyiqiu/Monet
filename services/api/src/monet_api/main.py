@@ -15,6 +15,7 @@ from monet_api.cache import MemoryCache, TieredCache
 from monet_api.config import Settings, get_settings
 from monet_api.documents.service import PROCESS_JOB, DocumentService
 from monet_api.documents.store import DocumentRepo, LocalBlobStore, MemoryDocumentRepo
+from monet_api.feedback import MemoryFeedbackRepo
 from monet_api.jobs import Job, PgJobQueue, Worker
 from monet_api.llm import LLMProvider, build_provider
 from monet_api.nlp.lexicon import Lexicon, load_lexicon
@@ -77,6 +78,7 @@ def create_app(settings: Settings | None = None, llm: LLMProvider | None = None)
     app.state.rate_limiter = RateLimiter(settings.rate_limit_per_minute)
     repo: DocumentRepo = db.PgDocumentRepo(engine) if engine is not None else MemoryDocumentRepo()
     app.state.queue = PgJobQueue(engine) if engine is not None else None
+    app.state.feedback = db.PgFeedbackRepo(engine) if engine is not None else MemoryFeedbackRepo()
     app.state.documents = DocumentService(
         repo, LocalBlobStore(settings.blob_dir), app.state.annotator, settings.max_pages, app.state.queue
     )
