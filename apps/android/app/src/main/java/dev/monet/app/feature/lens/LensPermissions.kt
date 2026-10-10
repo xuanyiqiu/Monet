@@ -19,8 +19,13 @@ fun needsNotificationPermission(context: Context): Boolean =
     Build.VERSION.SDK_INT >= 33 &&
         ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
 
-fun startLens(context: Context) {
-    ContextCompat.startForegroundService(context, Intent(context, LensService::class.java))
+fun startLens(context: Context, resultCode: Int, resultData: Intent) {
+    ContextCompat.startForegroundService(
+        context,
+        Intent(context, LensService::class.java)
+            .putExtra(LensService.EXTRA_RESULT_CODE, resultCode)
+            .putExtra(LensService.EXTRA_RESULT_DATA, resultData),
+    )
 }
 
 fun stopLens(context: Context) {
