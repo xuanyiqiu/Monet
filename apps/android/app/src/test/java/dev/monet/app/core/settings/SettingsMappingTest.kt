@@ -10,6 +10,13 @@ import org.junit.Test
 class SettingsMappingTest {
 
     @Test
+    fun `a fresh install has not onboarded and has not seen the capture notice`() {
+        val s = mutablePreferencesOf().toSettings()
+        org.junit.Assert.assertFalse(s.onboardingDone)
+        org.junit.Assert.assertFalse(s.captureExplained)
+    }
+
+    @Test
     fun `empty preferences yield defaults`() {
         assertEquals(Settings(), mutablePreferencesOf().toSettings())
     }

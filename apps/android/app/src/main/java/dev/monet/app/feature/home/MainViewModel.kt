@@ -32,6 +32,12 @@ class MainViewModel : ViewModel() {
         normalizeIncoming(raw)?.let { _sheetText.value = it }
     }
 
+    private val _captureNotice = MutableStateFlow(false)
+    val captureNotice: StateFlow<Boolean> = _captureNotice.asStateFlow()
+
+    fun showCaptureNotice() { _captureNotice.value = true }
+    fun dismissCaptureNotice() { _captureNotice.value = false }
+
     fun dismiss() {
         _sheetText.value = null
     }

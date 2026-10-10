@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -33,6 +34,8 @@ class SettingsRepositoryTest {
             setUseFakeApi(false)
             setApiBaseUrl("http://192.168.1.5:8000")
             setAuthToken("dev:me")
+            setOnboardingDone(true)
+            setCaptureExplained(true)
         }
         first.cancel()
 
@@ -46,6 +49,8 @@ class SettingsRepositoryTest {
         assertFalse(s.useFakeApi)
         assertEquals("http://192.168.1.5:8000", s.apiBaseUrl)
         assertEquals("dev:me", s.authToken)
+        assertTrue(s.onboardingDone)
+        assertTrue(s.captureExplained)
     }
 
     @Test

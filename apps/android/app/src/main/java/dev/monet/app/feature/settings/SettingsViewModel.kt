@@ -23,4 +23,6 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
     fun setUseFakeApi(v: Boolean) = viewModelScope.launch { repo.setUseFakeApi(v) }
     fun setApiBaseUrl(v: String) = viewModelScope.launch { repo.setApiBaseUrl(v.trim()) }
     fun setAuthToken(v: String) = viewModelScope.launch { repo.setAuthToken(v.trim()) }
+    fun setOnboardingDone(v: Boolean) = viewModelScope.launch { repo.setOnboardingDone(v) }
+    fun setCaptureExplained(v: Boolean) = viewModelScope.launch { repo.setCaptureExplained(v) }
 }

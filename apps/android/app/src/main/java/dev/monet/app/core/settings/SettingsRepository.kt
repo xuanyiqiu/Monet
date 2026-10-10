@@ -25,6 +25,9 @@ data class Settings(
     val useFakeApi: Boolean = true,
     val apiBaseUrl: String = "http://10.0.2.2:8000",
     val authToken: String = "dev:android",
+    val onboardingDone: Boolean = false,
+    /** The "Android will ask to capture your screen" notice was shown once. */
+    val captureExplained: Boolean = false,
 )
 
 /** Pure mapping so it can be unit tested without Android. */
@@ -38,6 +41,8 @@ internal fun Preferences.toSettings(): Settings {
         useFakeApi = this[Keys.useFakeApi] ?: d.useFakeApi,
         apiBaseUrl = this[Keys.apiBaseUrl] ?: d.apiBaseUrl,
         authToken = this[Keys.authToken] ?: d.authToken,
+        onboardingDone = this[Keys.onboardingDone] ?: d.onboardingDone,
+        captureExplained = this[Keys.captureExplained] ?: d.captureExplained,
     )
 }
 
@@ -52,6 +57,8 @@ private object Keys {
     val useFakeApi = booleanPreferencesKey("use_fake_api")
     val apiBaseUrl = stringPreferencesKey("api_base_url")
     val authToken = stringPreferencesKey("auth_token")
+    val onboardingDone = booleanPreferencesKey("onboarding_done")
+    val captureExplained = booleanPreferencesKey("capture_explained")
 }
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
@@ -68,4 +75,6 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
     suspend fun setUseFakeApi(value: Boolean) = store.edit { it[Keys.useFakeApi] = value }
     suspend fun setApiBaseUrl(value: String) = store.edit { it[Keys.apiBaseUrl] = value }
     suspend fun setAuthToken(value: String) = store.edit { it[Keys.authToken] = value }
+    suspend fun setOnboardingDone(value: Boolean) = store.edit { it[Keys.onboardingDone] = value }
+    suspend fun setCaptureExplained(value: Boolean) = store.edit { it[Keys.captureExplained] = value }
 }
