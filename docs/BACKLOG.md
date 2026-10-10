@@ -18,7 +18,7 @@ Legend: `[ ]` todo · `[~] (branch)` in progress · `[x]` done. Work top-down wi
 - [x] F-02 Network layer: kotlinx.serialization DTOs mirroring `contracts/openapi.yaml`, Retrofit `MonetApi`, `FakeMonetApi` with realistic sample data (memes, 成语), `AppContainer` DI, settings (DataStore). AC: unit tests for DTO parsing of contract examples.
 - [x] F-03 Detail sheet: Meaning / Breakdown (ruby pinyin, tone colors, IPA) / Why-it-says-that cards; TTS play + slow; save/copy. AC: works with FakeMonetApi; screenshots light+dark.
 - [x] F-04 Home: paste/type text + receive `ACTION_SEND`/`PROCESS_TEXT` from other apps → Detail sheet. AC: `adb shell am start` share intent test.
-- [ ] F-05 Settings screen (target lang, pinyin style, lines per step, theme). AC: persisted, unit tests.
+- [~] (feat/android) F-05 Settings screen (target lang, pinyin style, lines per step, theme). AC: persisted, unit tests.
 - [ ] F-06 Lens permissions + bubble overlay (foreground service, SYSTEM_ALERT_WINDOW), mode pill. AC: bubble shows over launcher on emulator.
 - [ ] F-07 Screen capture (MediaProjection) + ML Kit OCR (zh+latin) + line grouping. AC: unit tests on grouping, OCR test on a fixture bitmap.
 - [ ] F-08 Select mode: freeze frame, drag selection, translate selection card. AC: works end-to-end against local API.
