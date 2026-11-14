@@ -25,4 +25,4 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s \
   CMD python -c "import urllib.request,os;urllib.request.urlopen('http://127.0.0.1:%s/v1/health'%os.environ.get('PORT','8080'),timeout=4)"
 # Cloud Run injects $PORT. One worker: the lexicon/jieba are loaded per process (~1 s, ~200 MB).
-CMD ["sh", "-c", "exec uvicorn monet_api.main:create_app --factory --host 0.0.0.0 --port ${PORT:-8080}"]
+CMD ["sh", "-c", "exec uvicorn monet_api.main:create_app --factory --host 0.0.0.0 --port ${PORT:-8080} --no-access-log"]

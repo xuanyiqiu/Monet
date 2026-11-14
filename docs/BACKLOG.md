@@ -20,7 +20,7 @@ Legend: `[ ]` todo · `[~] (branch)` in progress · `[x]` done. Work top-down wi
 - [x] A-13 Feedback persistence (`feedback` table, migration 0003) + `scripts/feedback_report.py` listing the most reported terms. AC: tests on Postgres.
 - [ ] A-14 Redis-backed rate limit and cache wired through `MONET_REDIS_URL` (docker compose profile `cache`). AC: tests with the real container.
 - [ ] A-15 Semantic cache with pgvector for near-duplicate screen lines (OCR noise). AC: measurable hit-rate test on perturbed inputs.
-- [ ] A-16 Observability: structured JSON logs, request ids, per-endpoint latency and LLM-failure counters at `/v1/metrics` (dev) . AC: tests.
+- [x] A-16 Observability: structured JSON logs, request ids, per-endpoint latency and LLM-failure counters at `/v1/metrics` (dev) . AC: tests.
 
 ## Android (`apps/android`) — owner: android agent
 - [x] F-01 Project scaffold: Gradle KTS + version catalog, minSdk 26, target/compile 35, Compose, theme from DESIGN_SYSTEM (tokens, fonts via downloadable fonts), light/dark. AC: `assembleDebug` green, screenshot of theme preview on emulator.

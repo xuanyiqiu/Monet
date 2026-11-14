@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import time
+from collections.abc import Callable
 
 from monet_api.llm.base import LLMError, LLMProvider, LLMRateLimited
 
@@ -22,8 +23,13 @@ class FallbackProvider:
     """
 
     def __init__(
-        self, providers: list[LLMProvider], hedge_after_s: float | None = 5.0, clock=time.monotonic
+        self,
+        providers: list[LLMProvider],
+        hedge_after_s: float | None = 5.0,
+        clock=time.monotonic,
+        on_hedge: Callable[[str], None] | None = None,
     ) -> None:
+        self.on_hedge = on_hedge  # called with "next" or "duplicate" whenever a hedge attempt starts
         self.providers = providers
         self.name = providers[0].name
         self.model = providers[0].model
@@ -69,7 +75,11 @@ class FallbackProvider:
                             "hedging: %s is slow, also trying %s", order[nxt - 1].model, order[nxt].model
                         )
                         launch()
+                        if self.on_hedge:
+                            self.on_hedge("next")
                     else:
+                        if self.on_hedge:
+                            self.on_hedge("duplicate")
                         dup_left -= 1
                         log.info("hedging: %s is slow, sending a duplicate request", order[0].model)
                         launch(order[0])
