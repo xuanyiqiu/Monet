@@ -62,6 +62,7 @@ class LensOverlayActions(
     val onPrev: () -> Unit,
     val onNext: () -> Unit,
     val onStopReading: () -> Unit,
+    val onResumeCapture: () -> Unit,
 )
 
 val BubbleSize = 48.dp
@@ -161,7 +162,15 @@ private fun ModePill(state: LensUiState, actions: LensOverlayActions) {
             Segment("Select", state.mode == LensMode.SELECT, Modifier.weight(1f)) { actions.onMode(LensMode.SELECT) }
             Segment("Off", false, Modifier.weight(1f)) { actions.onMode(LensMode.OFF) }
         }
-        if (state.mode == LensMode.SELECT) {
+        if (state.captureLost) {
+            Text(
+                "Screen capture ended.",
+                style = Monet.type.label,
+                color = c.inkMuted,
+                modifier = Modifier.padding(horizontal = Spacing.x2, vertical = Spacing.x1),
+            )
+            Segment("Resume capture", false, Modifier.fillMaxWidth()) { actions.onResumeCapture() }
+        } else if (state.mode == LensMode.SELECT) {
             Segment("Select on screen", false, Modifier.fillMaxWidth()) { actions.onSelect() }
         } else if (state.reading == null) {
             Segment("Start reading", false, Modifier.fillMaxWidth()) { actions.onRead() }
@@ -248,7 +257,7 @@ private fun StepButton(glyph: String, description: String, enabled: Boolean, onC
     }
 }
 
-private val previewActions = LensOverlayActions({}, {}, { _, _ -> }, { _, _ -> }, {}, {}, {}, {}, {}, {}, {}, {})
+private val previewActions = LensOverlayActions({}, {}, { _, _ -> }, { _, _ -> }, {}, {}, {}, {}, {}, {}, {}, {}, {})
 
 @Preview(name = "Lens expanded light", showBackground = true, widthDp = 320, heightDp = 220)
 @Composable

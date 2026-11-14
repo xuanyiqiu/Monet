@@ -85,4 +85,28 @@ class LineGroupingTest {
         assertEquals(360, block.right)
         assertEquals(188, block.bottom)
     }
+
+    @Test
+    fun `a line that reaches the page edge is joined to the next even with loose line spacing`() {
+        val wrapped = listOf(
+            ScreenLine("3.今天天气不错,我们一起去公园散", 35, 288, 1010, 351),
+            ScreenLine("步吧。", 65, 404, 196, 458),
+            ScreenLine("4.学习汉语需要耐心和坚持。", 64, 604, 780, 658),
+        )
+        assertEquals(
+            listOf("3.今天天气不错,我们一起去公园散步吧。", "4.学习汉语需要耐心和坚持。"),
+            groupIntoBlocks(wrapped, pageWidth = 1080).map { it.text },
+        )
+        // Without knowing the page width the same gap keeps them apart.
+        assertEquals(3, groupIntoBlocks(wrapped).size)
+    }
+
+    @Test
+    fun `short lines with the same loose spacing stay separate items`() {
+        val items = listOf(
+            ScreenLine("First item", 64, 288, 500, 351),
+            ScreenLine("Second item", 64, 404, 520, 458),
+        )
+        assertEquals(2, groupIntoBlocks(items, pageWidth = 1080).size)
+    }
 }
