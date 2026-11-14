@@ -38,6 +38,13 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".feature.lens.CaptureConsentActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
         <service
             android:name=".feature.lens.LensService"
             android:exported="false"

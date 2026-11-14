@@ -44,7 +44,13 @@ data class ReadingSession(
     fun withLinesPerStep(n: Int): ReadingSession = copy(linesPerStep = n.coerceAtLeast(1))
 
     val label: String
-        get() = if (units.isEmpty()) "Nothing to read" else if (end - index <= 1) "${index + 1} of ${units.size}" else "${index + 1}–$end of ${units.size}"
+        get() = when {
+            units.isEmpty() -> "Nothing to read"
+            // After a scroll that showed nothing new, the band waits past the last unit.
+            active.isEmpty() -> "All read"
+            end - index <= 1 -> "${index + 1} of ${units.size}"
+            else -> "${index + 1}–$end of ${units.size}"
+        }
 }
 
 // ---- Color helpers for chips that blend into the page ---------------------------------------
@@ -97,4 +103,85 @@ fun borderPixels(width: Int, height: Int, rect: SelRect, pad: Int = 2, step: Int
         out += pixelAt(l, y); out += pixelAt(r, y); y += step
     }
     return out.toIntArray()
+}
+
+// ---- Following a page that scrolls ----------------------------------------------------------
+
+/** "All" in the lines-per-step setting: one step covers everything on screen. */
+const val LINES_ALL = 1_000
+
+/** Text reduced to what survives OCR jitter between two captures of the same line. */
+fun matchKey(text: String): String = text.filter { it.isLetterOrDigit() }.lowercase()
+
+/** Remembers what the user has already read, so a re-read after a scroll can skip it. */
+class ReadHistory(private val capacity: Int = 400) {
+    private val seen = LinkedHashSet<String>()
+
+    fun mark(units: List<ReadingUnit>) {
+        units.forEach { unit ->
+            val key = matchKey(unit.text)
+            if (key.isNotEmpty()) {
+                seen.remove(key)
+                seen.add(key)
+            }
+        }
+        while (seen.size > capacity) seen.remove(seen.first())
+    }
+
+    operator fun contains(unit: ReadingUnit): Boolean = matchKey(unit.text) in seen
+
+    fun clear() = seen.clear()
+
+    /**
+     * Records what [session] has shown before the page is read again: every unit the band has
+     * passed, plus the active ones when the band had reached the bottom (the user scrolled on).
+     */
+    fun markFrom(session: ReadingSession) {
+        mark(session.read)
+        if (!session.hasNext) mark(session.active)
+    }
+}
+
+/** Where the band starts after a re-read: the first unit not read yet (the end when all were read). */
+fun reanchorIndex(units: List<ReadingUnit>, history: ReadHistory): Int {
+    val index = units.indexOfFirst { it !in history }
+    return if (index < 0) units.size else index
+}
+
+/** Drops text lines that sit under one of the Lens's own windows (the bubble, an open pill). */
+fun excludeRegions(lines: List<ScreenLine>, regions: List<SelRect>): List<ScreenLine> =
+    if (regions.isEmpty()) lines else lines.filterNot { line ->
+        regions.any { r -> line.left < r.right && line.right > r.left && line.top < r.bottom && line.bottom > r.top }
+    }
+
+// ---- What is worth reading, and how big its chip is -----------------------------------------
+
+private val URL_LIKE = Regex("""^(https?://)?[\w.-]+(:\d+)?(/\S*)?$""")
+
+/**
+ * False for screen furniture that OCR finds but nobody wants translated: address bars, bare
+ * numbers, counters, clock times. A unit needs at least two letters and must not be a lone URL.
+ */
+fun isReadable(text: String): Boolean {
+    val trimmed = text.trim()
+    if (trimmed.count { it.isLetter() } < 2) return false
+    if (!trimmed.contains(' ') && trimmed.contains('.') && URL_LIKE.matches(trimmed) && trimmed.all { it.code < 0x2E80 }) return false
+    return true
+}
+
+/** Chip text size in pixels: it follows the source line height, bounded so it stays readable (12-28sp). */
+fun chipTextSizePx(lineHeightPx: Float, density: Float, fontScale: Float, textScale: Float = 1f): Float {
+    val scaled = density * fontScale
+    val sp = (lineHeightPx * 0.55f * textScale / scaled).coerceIn(12f, 28f)
+    return sp * scaled
+}
+
+/**
+ * Width of a chip window: at least the source box, widened toward the screen edge when the
+ * translation is longer. [textWidthPx] is the translation measured on one line; a block of
+ * [lineCount] source lines has that many lines to spread it over.
+ */
+fun chipWidthPx(sourceWidthPx: Int, textWidthPx: Float, lineCount: Int, paddingPx: Int, maxWidthPx: Int): Int {
+    val needed = (textWidthPx * 1.08f / lineCount.coerceAtLeast(1)).toInt() + paddingPx
+    return max(sourceWidthPx, needed).coerceAtMost(max(sourceWidthPx, maxWidthPx))
 }

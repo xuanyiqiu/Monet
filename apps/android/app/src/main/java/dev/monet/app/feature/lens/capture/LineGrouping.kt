@@ -42,6 +42,8 @@ fun joinLines(lines: List<String>): String {
 
 private const val MAX_HEIGHT_RATIO = 1.6f
 private const val MAX_GAP_FACTOR = 0.8f
+private const val WRAPPED_GAP_FACTOR = 1.25f
+private const val FULL_LINE_FRACTION = 0.85f
 private const val MIN_OVERLAP = 0.3f
 
 /** Top-to-bottom, then left-to-right; lines whose vertical centers are close count as one row. */
@@ -64,12 +66,12 @@ fun readingOrder(lines: List<ScreenLine>): List<ScreenLine> {
  * block's last line, is aligned with it (left edge or center), has a similar font size and overlaps
  * horizontally. Side-by-side columns therefore stay separate blocks.
  */
-fun groupIntoBlocks(lines: List<ScreenLine>): List<TextBlock> {
+fun groupIntoBlocks(lines: List<ScreenLine>, pageWidth: Int = 0): List<TextBlock> {
     val usable = lines.filter { l -> l.text.any { it.isLetterOrDigit() || isCjk(it) } && l.width > 0 && l.height > 0 }
     val blocks = mutableListOf<MutableList<ScreenLine>>()
     for (line in readingOrder(usable)) {
         val target = blocks
-            .map { it to gapBelow(it.last(), line) }
+            .map { it to gapBelow(it.last(), line, pageWidth) }
             .filter { it.second != null }
             .minByOrNull { it.second!! }
             ?.first
@@ -78,13 +80,19 @@ fun groupIntoBlocks(lines: List<ScreenLine>): List<TextBlock> {
     return blocks.map { TextBlock(it) }.sortedWith(compareBy({ it.top }, { it.left }))
 }
 
-/** Vertical gap when [next] continues the block ending at [last]; null when it does not. */
-private fun gapBelow(last: ScreenLine, next: ScreenLine): Int? {
+/**
+ * Vertical gap when [next] continues the block ending at [last]; null when it does not.
+ * A line that runs to the right edge of the page ([pageWidth], when known) was wrapped, so the
+ * line under it belongs to the same paragraph even with generous line spacing.
+ */
+private fun gapBelow(last: ScreenLine, next: ScreenLine, pageWidth: Int): Int? {
     val h = min(last.height, next.height)
     val ratio = max(last.height, next.height).toFloat() / h
     if (ratio > MAX_HEIGHT_RATIO) return null
     val gap = next.top - last.bottom
-    if (gap < -0.3f * h || gap > MAX_GAP_FACTOR * h) return null
+    val wrapped = pageWidth > 0 && last.right >= FULL_LINE_FRACTION * pageWidth
+    val maxGap = if (wrapped) WRAPPED_GAP_FACTOR else MAX_GAP_FACTOR
+    if (gap < -0.3f * h || gap > maxGap * h) return null
     val overlap = min(last.right, next.right) - max(last.left, next.left)
     if (overlap < MIN_OVERLAP * min(last.width, next.width)) return null
     val aligned = abs(last.left - next.left) <= 2 * h || abs(last.centerX - next.centerX) <= h

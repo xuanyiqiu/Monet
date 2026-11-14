@@ -16,6 +16,8 @@ data class LensUiState(
     val linesPerStep: Int = 2,
     val lastRead: List<dev.monet.app.feature.lens.capture.TextBlock> = emptyList(),
     val reading: ReadingProgress? = null,
+    /** Android ended the screen capture (lock screen, "stop sharing"); the user has to allow it again. */
+    val captureLost: Boolean = false,
 )
 
 /** Process-wide state shared by the overlay service and the app UI. */
@@ -40,3 +42,7 @@ fun isOnRightHalf(windowX: Int, windowWidth: Int, screenWidth: Int): Boolean =
 
 fun clampY(y: Int, windowHeight: Int, screenHeight: Int): Int =
     y.coerceIn(0, (screenHeight - windowHeight).coerceAtLeast(0))
+
+/** Top of the bubble window while the pill is open: lifted just enough for the pill to fit above [bottomLimit]. */
+fun pillTop(collapsedY: Int, pillHeight: Int, bottomLimit: Int): Int =
+    minOf(collapsedY, bottomLimit - pillHeight).coerceAtLeast(0)

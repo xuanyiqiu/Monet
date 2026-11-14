@@ -8,6 +8,7 @@ import dev.monet.app.core.network.ApiException
 import dev.monet.app.core.network.MonetApi
 import dev.monet.app.core.settings.PinyinStyle
 import dev.monet.app.core.settings.SettingsRepository
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,12 +27,16 @@ sealed interface DetailUiState {
     data class Failed(val offline: Boolean, val message: String) : DetailUiState
 }
 
-class DetailViewModel(
+/**
+ * Loads the full explanation of one text. It is plain (no Android ViewModel) so the same logic
+ * serves the in-app sheet and the sheet the Lens draws over other apps.
+ */
+class DetailController(
+    private val scope: CoroutineScope,
     private val api: MonetApi,
     private val settings: SettingsRepository,
-    private val text: String,
-) : ViewModel() {
-
+    val text: String,
+) {
     private val _state = MutableStateFlow<DetailUiState>(DetailUiState.Loading)
     val state: StateFlow<DetailUiState> = _state.asStateFlow()
 
@@ -43,7 +48,7 @@ class DetailViewModel(
 
     fun load() {
         job?.cancel()
-        job = viewModelScope.launch {
+        job = scope.launch {
             _state.value = DetailUiState.Loading
             val s = settings.settings.first()
             _state.value = try {
@@ -53,4 +58,15 @@ class DetailViewModel(
             }
         }
     }
+
+    fun cancel() {
+        job?.cancel()
+    }
+}
+
+class DetailViewModel(api: MonetApi, settings: SettingsRepository, text: String) : ViewModel() {
+    private val controller = DetailController(viewModelScope, api, settings, text)
+    val state: StateFlow<DetailUiState> get() = controller.state
+
+    fun load() = controller.load()
 }

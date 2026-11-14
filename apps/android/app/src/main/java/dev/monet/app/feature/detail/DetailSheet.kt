@@ -15,11 +15,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import dev.monet.app.MonetApp
+import dev.monet.app.core.network.Lang
 import dev.monet.app.ui.theme.Monet
 import dev.monet.app.ui.theme.Radius
 
@@ -40,32 +42,47 @@ fun DetailSheet(text: String, onDismiss: () -> Unit) {
     val speaker = remember { Speaker(context) }
     DisposableEffect(speaker) { onDispose { speaker.shutdown() } }
 
-    val actions = remember(text, state) {
-        val ready = state as? DetailUiState.Ready
-        DetailActions(
-            onRetry = viewModel::load,
-            onSpeak = { slow ->
-                val ok = speaker.speak(text, ready?.annotation?.sourceLang ?: guessLang(text), slow)
-                if (!ok) Toast.makeText(context, "No voice available for this language", Toast.LENGTH_SHORT).show()
-            },
-            onCopy = { copy(context, shareText(text, ready)) },
-            onShare = { share(context, shareText(text, ready)) },
-        )
-    }
+    val actions = remember(text, state) { buildDetailActions(context, speaker, text, state, onRetry = viewModel::load) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = Monet.colors.paper,
         shape = RoundedCornerShape(topStart = Radius.lg, topEnd = Radius.lg),
-        tonalElevation = androidx.compose.ui.unit.Dp(0f),
+        tonalElevation = 0.dp,
     ) {
         DetailContent(state, actions, Modifier)
     }
 }
 
-private fun guessLang(text: String) =
-    if (text.any { it.code in 0x4E00..0x9FFF }) dev.monet.app.core.network.Lang.ZH else dev.monet.app.core.network.Lang.EN
+/**
+ * The sheet's actions for [text] in its current [state]. Shared by the in-app sheet and the one the
+ * Lens draws over other apps; [afterShare] lets the overlay get out of the way of the share dialog.
+ */
+internal fun buildDetailActions(
+    context: Context,
+    speaker: Speaker,
+    text: String,
+    state: DetailUiState,
+    onRetry: () -> Unit,
+    afterShare: () -> Unit = {},
+): DetailActions {
+    val ready = state as? DetailUiState.Ready
+    return DetailActions(
+        onRetry = onRetry,
+        onSpeak = { slow ->
+            val ok = speaker.speak(text, ready?.annotation?.sourceLang ?: guessLang(text), slow)
+            if (!ok) Toast.makeText(context, "No voice available for this language", Toast.LENGTH_SHORT).show()
+        },
+        onCopy = { copy(context, shareText(text, ready)) },
+        onShare = {
+            share(context, shareText(text, ready))
+            afterShare()
+        },
+    )
+}
+
+private fun guessLang(text: String): Lang = if (text.any { it.code in 0x4E00..0x9FFF }) Lang.ZH else Lang.EN
 
 private fun shareText(source: String, ready: DetailUiState.Ready?): String {
     val translation = ready?.annotation?.translation.orEmpty()
