@@ -3,7 +3,7 @@
 Append newest at the bottom. Keep entries short: what was done, what's next, gotchas.
 
 ## Questions for the user
-- (none yet)
+- **Deploy target (2026-11-14, blocks the public deployment only).** The API is ready to ship as one container (docs/DEPLOY.md), but this machine has no personal cloud credentials: `gcloud` is signed in only as a work account (`…@robingen.com`, no project selected) and `gh` is not signed in. Nothing was deployed there. To publish, the user needs to choose: (1) the cloud account/project for the API (Cloud Run on a personal Google account, or another host); (2) a Supabase project (Postgres URL, JWT secret, Storage bucket) or an alternative for database, sign-in and file storage; (3) how the Android app is distributed (GitHub Release APK needs `gh auth login`; Play Store needs a developer account). Until then the "deployable" state is: Docker image builds and passes a smoke test, a signed release APK is produced locally, and deployment is one documented command.
 
 ## Contract requests
 - (none yet)

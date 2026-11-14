@@ -35,5 +35,17 @@ Legend: `[ ]` todo · `[~] (branch)` in progress · `[x]` done. Work top-down wi
 - [x] F-10 Library + Reader (PdfRenderer + overlay from pages endpoint, reflow reader for docx/txt).
 - [x] F-11 Onboarding.
 
+
+### Android round 2 (hardening, missing spec features, release)
+- [ ] F-12 Lens robustness: latest-frame cache (no "could not capture" on a static screen), stop cleanly when Android ends the projection (lock screen, system chip), rotation, pill kept on screen, no bubble flicker on capture. AC: unit tests for the pure parts; emulator check incl. rotation and projection stop.
+- [ ] F-13 Auto mode follows the screen: `FrameGate` (frame diff + ~300 ms settle) re-reads after a scroll and re-anchors on the first unread unit; chips are tappable (open the Detail sheet); a ⌄ handle advances the band. AC: `FrameGate` and re-anchor logic unit-tested; emulator scroll test.
+- [ ] F-14 Detail sheet completeness: Save to Notebook, Report a bad translation (`/v1/feedback`), tap a token to hear it alone, second tap on ▶ plays slow; on-device annotation cache so repeated text is instant and works offline. AC: unit tests; emulator check offline.
+- [ ] F-15 Notebook: saved lines and expressions with their full Detail data (offline), search, delete, and a daily spaced-repetition review (5–10 cards). AC: scheduler unit-tested; persistence round-trip test.
+- [ ] F-16 Settings from PRODUCT §2.5: source language, lines per step (1, 2, 3, 5, 10, All), overlay opacity, chip text size, TTS speed. AC: persisted + applied; unit tests.
+- [ ] F-17 Typography: downloadable fonts (IBM Plex Sans, Source Serif 4, Noto Serif SC) with system fallback. AC: screenshot showing the real faces.
+- [ ] F-18 Reader round 2: remembers the reading position, long-press opens the Detail sheet, upload from the share sheet, retry for failed pages/documents. AC: emulator check.
+- [ ] F-19 Release build: R8 + resource shrinking, per-ABI APKs, release signing from a local keystore (never committed), version from git. AC: release APK installs and runs the Lens on the emulator; size reported.
+- [ ] F-20 Accounts: Supabase Auth sign-in and token refresh (blocked: needs the Supabase project, see PROGRESS "Questions for the user").
+
 ## Later
 - Notebook + spaced repetition, accounts sync, offline pinyin, EPUB/images, scanned-PDF OCR.
