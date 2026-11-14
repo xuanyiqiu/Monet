@@ -20,7 +20,8 @@ from monet_api.jobs import Job, PgJobQueue, Worker
 from monet_api.llm import LLMProvider, build_provider
 from monet_api.nlp.lexicon import Lexicon, load_lexicon
 from monet_api.nlp.tokenize import Tokenizer
-from monet_api.routers import core, documents
+from monet_api.observability import InstrumentedProvider, Metrics, ObservabilityMiddleware, configure_logging
+from monet_api.routers import core, documents, ops
 
 log = logging.getLogger("monet")
 _STATIC = Path(__file__).parent / "static"
@@ -67,12 +68,16 @@ def create_app(settings: Settings | None = None, llm: LLMProvider | None = None)
         docs_url="/docs" if settings.is_dev else None,
         redoc_url=None,
     )
+    if settings.env != "test":
+        configure_logging(settings.log_json if settings.log_json is not None else settings.env == "prod")
     lexicon, tokenizer = shared_nlp(settings)
+    metrics = Metrics()
     app.state.settings = settings
+    app.state.metrics = metrics
     app.state.annotator = Annotator(
         lexicon,
         tokenizer,
-        llm or build_provider(settings),
+        InstrumentedProvider(llm, metrics) if llm else build_provider(settings, metrics),
         TieredCache(MemoryCache(), settings.redis_url),
     )
     app.state.rate_limiter = RateLimiter(settings.rate_limit_per_minute)
@@ -90,6 +95,8 @@ def create_app(settings: Settings | None = None, llm: LLMProvider | None = None)
         )
     app.include_router(core.router)
     app.include_router(documents.router)
+    app.include_router(ops.router)
+    app.add_middleware(ObservabilityMiddleware, metrics=metrics)  # added last: outermost, sees every request
 
     if settings.auth_mode == "dev":
 
@@ -103,5 +110,11 @@ def create_app(settings: Settings | None = None, llm: LLMProvider | None = None)
 def run() -> None:
     import uvicorn
 
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
-    uvicorn.run(create_app(), host="0.0.0.0", port=8000)  # noqa: S104 (emulator reaches host via 10.0.2.2)
+    # Logging is configured by create_app (JSON in prod); our middleware replaces uvicorn's access log.
+    uvicorn.run(
+        create_app(),
+        host="0.0.0.0",  # noqa: S104 (the emulator reaches the host via 10.0.2.2)
+        port=8000,
+        log_config=None,
+        access_log=False,
+    )

@@ -55,6 +55,10 @@ class Settings(BaseSettings):
 
     cors_origins: list[str] = Field(default_factory=list)
 
+    # Observability
+    log_json: bool | None = None  # None: JSON lines in prod, readable text otherwise
+    metrics_token: str | None = None  # prod: /v1/metrics requires `Bearer <token>`; unset = disabled
+
     @property
     def is_dev(self) -> bool:
         return self.env in ("dev", "test")
