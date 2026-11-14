@@ -51,4 +51,10 @@ Deploying to the free tier: [docs/DEPLOY.md](docs/DEPLOY.md).
 
 ## Status
 
-See [docs/BACKLOG.md](docs/BACKLOG.md) and [docs/PROGRESS.md](docs/PROGRESS.md). The API milestones are complete; the Android Lens (screen capture, OCR, select and auto modes, document reader) is in progress.
+Working today (Android + API, verified on the emulator against the real API):
+- **Lens over any app.** Auto mode reads the screen, walks it a few lines at a time under a reading band, draws translation chips in place, follows the page when you scroll, and opens the full explanation when you tap a chip, without leaving the app. Select mode freezes the screen for drag-to-translate. The bubble survives rotation and offers to resume if Android stops the capture.
+- **Detail sheet** with translation, ruby pinyin with tone colors or IPA, and cards for 成语, memes, slang and wordplay; audio, copy, share.
+- **Library and reader** for PDF, DOCX and TXT, with precomputed translations.
+- **API**: annotate endpoints, documents with a Postgres job queue, Supabase JWT auth, request ids, JSON logs and Prometheus metrics.
+
+Not yet: public deployment (needs a cloud account and a Supabase project, see "Questions for the user" in [docs/PROGRESS.md](docs/PROGRESS.md)), notebook and spaced repetition, accounts. Plan: [docs/BACKLOG.md](docs/BACKLOG.md).
