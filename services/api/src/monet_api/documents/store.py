@@ -10,6 +10,8 @@ from pathlib import Path
 from typing import Protocol
 from uuid import UUID
 
+import httpx
+
 from monet_api.documents.extract import PageData
 from monet_api.schemas import Document, DocumentPage
 
@@ -44,6 +46,67 @@ class LocalBlobStore:
 
     async def delete(self, key: str) -> None:
         self._path(key).unlink(missing_ok=True)
+
+
+class SupabaseBlobStore:
+    """BlobStore backed by the Supabase Storage REST API."""
+
+    def __init__(
+        self,
+        base_url: str,
+        service_key: str,
+        bucket: str = "documents",
+        client: httpx.AsyncClient | None = None,
+    ) -> None:
+        self.base_url = base_url.rstrip("/")
+        self.service_key = service_key
+        self.bucket = bucket
+        self._http = client
+
+    def _client(self) -> httpx.AsyncClient:
+        if self._http is None:
+            self._http = httpx.AsyncClient(timeout=httpx.Timeout(20.0))
+        return self._http
+
+    def _url(self, key: str) -> str:
+        if ".." in key or key.startswith("/"):
+            raise ValueError("invalid blob key")
+        return f"{self.base_url}/storage/v1/object/{self.bucket}/{key}"
+
+    def _headers(self) -> dict[str, str]:
+        return {"Authorization": f"Bearer {self.service_key}", "apikey": self.service_key}
+
+    async def put(self, key: str, data: bytes) -> None:
+        response = await self._client().post(
+            self._url(key),
+            content=data,
+            headers={
+                **self._headers(),
+                "x-upsert": "true",
+                "Content-Type": "application/octet-stream",
+            },
+        )
+        if not response.is_success:
+            raise RuntimeError(f"storage upload failed with status {response.status_code}")
+
+    async def get(self, key: str) -> bytes:
+        response = await self._client().get(self._url(key), headers=self._headers())
+        if response.status_code == 404:
+            raise FileNotFoundError(key)
+        if not response.is_success:
+            raise RuntimeError(f"storage download failed with status {response.status_code}")
+        return response.content
+
+    async def delete(self, key: str) -> None:
+        response = await self._client().delete(self._url(key), headers=self._headers())
+        if response.status_code == 404:
+            return
+        if not response.is_success:
+            raise RuntimeError(f"storage delete failed with status {response.status_code}")
+
+    async def aclose(self) -> None:
+        if self._http is not None:
+            await self._http.aclose()
 
 
 @dataclass

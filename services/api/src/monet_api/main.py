@@ -14,7 +14,13 @@ from monet_api.auth import RateLimiter
 from monet_api.cache import MemoryCache, TieredCache
 from monet_api.config import Settings, get_settings
 from monet_api.documents.service import PROCESS_JOB, DocumentService
-from monet_api.documents.store import DocumentRepo, LocalBlobStore, MemoryDocumentRepo
+from monet_api.documents.store import (
+    BlobStore,
+    DocumentRepo,
+    LocalBlobStore,
+    MemoryDocumentRepo,
+    SupabaseBlobStore,
+)
 from monet_api.feedback import MemoryFeedbackRepo
 from monet_api.jobs import Job, PgJobQueue, Worker
 from monet_api.llm import LLMProvider, build_provider
@@ -36,6 +42,12 @@ def shared_nlp(settings: Settings) -> tuple[Lexicon, Tokenizer]:
         lexicon = load_lexicon(settings.lexicon_dir, settings.chengyu_path)
         _shared[key] = (lexicon, Tokenizer(lexicon.words(), cache_dir=settings.cache_dir))
     return _shared[key]  # type: ignore[return-value]
+
+
+def build_blob_store(settings: Settings) -> BlobStore:
+    if settings.supabase_url and settings.supabase_service_key:
+        return SupabaseBlobStore(settings.supabase_url, settings.supabase_service_key, settings.supabase_bucket)
+    return LocalBlobStore(settings.blob_dir)
 
 
 def create_app(settings: Settings | None = None, llm: LLMProvider | None = None) -> FastAPI:
@@ -85,7 +97,7 @@ def create_app(settings: Settings | None = None, llm: LLMProvider | None = None)
     app.state.queue = PgJobQueue(engine) if engine is not None else None
     app.state.feedback = db.PgFeedbackRepo(engine) if engine is not None else MemoryFeedbackRepo()
     app.state.documents = DocumentService(
-        repo, LocalBlobStore(settings.blob_dir), app.state.annotator, settings.max_pages, app.state.queue
+        repo, build_blob_store(settings), app.state.annotator, settings.max_pages, app.state.queue
     )
 
     errors.install(app, expose_errors=settings.is_dev)

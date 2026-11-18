@@ -23,6 +23,8 @@ class Settings(BaseSettings):
     supabase_jwt_secret: str | None = None  # HS256 projects
     supabase_url: str | None = None  # https://<ref>.supabase.co ; enables ES256/RS256 via JWKS
     supabase_jwt_audience: str = "authenticated"
+    supabase_service_key: str | None = None  # service_role key: enables Supabase Storage
+    supabase_bucket: str = "documents"
 
     # LLM
     llm_provider: Literal["fake", "gemini", "openai_compat"] = "fake"
