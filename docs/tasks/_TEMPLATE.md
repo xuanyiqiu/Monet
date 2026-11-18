@@ -35,8 +35,9 @@ Everything else, especially `contracts/openapi.yaml`, any `.env` file, migration
 3. Concrete regression case.
 
 ## Acceptance
-- [ ] `cd services/api && ../../.tools/bin/uv.exe run pytest -q` green (all existing tests still pass)
-- [ ] `cd services/api && ../../.tools/bin/uv.exe run ruff check .` green
+Run both commands with the working directory set to `services/api` (use the tool's `workdir`; do not chain with `cd` or `&&`):
+- [ ] `../../.tools/bin/uv.exe run pytest -q` green (all existing tests still pass)
+- [ ] `../../.tools/bin/uv.exe run ruff check .` green
 - [ ] Commit on the current branch: `feat(api): <summary>`
 
 ## Worker report
