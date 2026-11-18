@@ -70,6 +70,9 @@ def create_app(settings: Settings | None = None, llm: LLMProvider | None = None)
         if worker is not None:
             await worker.stop()
         await app.state.documents.join()
+        closer = getattr(app.state.documents.blobs, "aclose", None)
+        if closer is not None:
+            await closer()
         if engine is not None:
             await engine.dispose()
 

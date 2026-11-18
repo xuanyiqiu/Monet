@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Protocol
+from urllib.parse import quote
 from uuid import UUID
 
 import httpx
@@ -71,7 +72,7 @@ class SupabaseBlobStore:
     def _url(self, key: str) -> str:
         if ".." in key or key.startswith("/"):
             raise ValueError("invalid blob key")
-        return f"{self.base_url}/storage/v1/object/{self.bucket}/{key}"
+        return f"{self.base_url}/storage/v1/object/{self.bucket}/{quote(key, safe='/')}"
 
     def _headers(self) -> dict[str, str]:
         return {"Authorization": f"Bearer {self.service_key}", "apikey": self.service_key}
@@ -105,7 +106,8 @@ class SupabaseBlobStore:
             raise RuntimeError(f"storage delete failed with status {response.status_code}")
 
     async def aclose(self) -> None:
-        if self._http is not None:
+        """Close the HTTP client. The store cannot be used afterwards."""
+        if self._http is not None and not self._http.is_closed:
             await self._http.aclose()
 
 

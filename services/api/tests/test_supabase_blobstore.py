@@ -1,12 +1,19 @@
 import httpx
 import pytest
+from fastapi.testclient import TestClient
 
 from monet_api.config import Settings
 from monet_api.documents.store import LocalBlobStore, SupabaseBlobStore
-from monet_api.main import build_blob_store
+from monet_api.main import build_blob_store, create_app
 
 SERVICE_KEY = "super-secret-service-key"
 BUCKET = "documents"
+
+
+def _safe_settings(settings):
+    return settings.model_copy(
+        update={"database_url": None, "supabase_url": None, "supabase_service_key": None}
+    )
 
 
 def make_transport(
@@ -115,3 +122,52 @@ def test_build_blob_store_with_supabase_settings(tmp_path):
         supabase_service_key=SERVICE_KEY,
     )
     assert isinstance(build_blob_store(settings), SupabaseBlobStore)
+
+
+async def test_put_percent_encodes_email_and_space():
+    seen: list[httpx.Request] = []
+    store = make_store({}, seen=seen)
+    await store.put("user@x.com/a b.pdf", b"x")
+    assert len(seen) == 1
+    assert seen[0].url.raw_path.decode() == "/storage/v1/object/documents/user%40x.com/a%20b.pdf"
+
+
+async def test_put_percent_encodes_literal_percent():
+    seen: list[httpx.Request] = []
+    store = make_store({}, seen=seen)
+    await store.put("100%.pdf", b"x")
+    assert len(seen) == 1
+    assert seen[0].url.raw_path.decode() == "/storage/v1/object/documents/100%25.pdf"
+
+
+async def test_put_then_get_with_special_characters():
+    blobs: dict[str, bytes] = {}
+    store = make_store(blobs)
+    await store.put("a b/ü.pdf", b"payload")
+    assert await store.get("a b/ü.pdf") == b"payload"
+
+
+async def test_aclose_without_client_and_twice_with_client():
+    store = SupabaseBlobStore("https://p.supabase.co", SERVICE_KEY)
+    await store.aclose()
+    assert store._http is None
+
+    store = make_store({})
+    await store.aclose()
+    await store.aclose()
+    assert store._http.is_closed is True
+
+
+def test_lifespan_closes_blob_store(settings, fake_llm):
+    app = create_app(_safe_settings(settings), llm=fake_llm)
+    store = make_store({})
+    app.state.documents.blobs = store
+    client = store._http
+    with TestClient(app):
+        pass
+    assert client.is_closed is True
+
+
+def test_lifespan_with_local_blob_store(settings, fake_llm):
+    with TestClient(create_app(_safe_settings(settings), llm=fake_llm)):
+        pass
