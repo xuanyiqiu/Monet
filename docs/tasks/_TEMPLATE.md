@@ -9,6 +9,9 @@ Planner checklist (delete this block when filled):
 - Read every file listed below; copy real names/signatures, do not invent them.
 - grep that every name you ask the worker to add does not already exist.
 - For each resource the task creates (client, file, task): who closes/owns it?
+- Tests that build the app (`create_app`): null `database_url` and `supabase_*` so no test can reach a real DB.
+- For each test: does it fail on the OLD code? If not, rewrite it or label it a regression guard.
+- Say who updates BACKLOG/PROGRESS and exactly which files go in the commit; list the spec file (Worker report) under Files to edit.
 - 1-4 files, 3-8 numbered tests, each a concrete input -> output.
 - No vague words (improve, properly, edge cases, etc.). Run scripts/lint_task.py.
 -->

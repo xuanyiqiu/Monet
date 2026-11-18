@@ -7,8 +7,9 @@
   "permission": {
     "edit": "allow",
     "webfetch": "deny",
+    "external_directory": "deny",
     "bash": {
-      "*": "ask",
+      "*": "deny",
 
       "ls*": "allow",
       "dir*": "allow",
