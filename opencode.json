@@ -1,0 +1,53 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "opencode/deepseek-v4.1-flash-free",
+  "small_model": "opencode/deepseek-v4.1-flash-free",
+  "autoupdate": false,
+  "share": "disabled",
+  "permission": {
+    "edit": "allow",
+    "webfetch": "deny",
+    "bash": {
+      "*": "ask",
+
+      "ls*": "allow",
+      "dir*": "allow",
+      "cat*": "allow",
+      "rg*": "allow",
+      "Get-ChildItem*": "allow",
+      "Get-Content*": "allow",
+      "Select-String*": "allow",
+      "Test-Path*": "allow",
+
+      "git status*": "allow",
+      "git diff*": "allow",
+      "git log*": "allow",
+      "git branch*": "allow",
+      "git -C*": "allow",
+      "git add*": "allow",
+      "git commit*": "allow",
+
+      "../../.tools/bin/uv.exe run pytest*": "allow",
+      "../../.tools/bin/uv.exe run ruff*": "allow",
+      "cd services/api && ../../.tools/bin/uv.exe run*": "allow",
+      "cd apps/android && ./gradlew.bat*": "allow",
+      "./gradlew.bat*": "allow",
+
+      "git push*": "deny",
+      "git checkout main*": "deny",
+      "git merge*": "deny",
+      "git rebase*": "deny",
+      "git reset --hard*": "deny",
+      "*git*push*": "deny",
+      "*git*reset --hard*": "deny",
+      "*git*checkout main*": "deny",
+      "*psql*": "deny",
+      "*pg_dump*": "deny",
+      "*pg_restore*": "deny",
+      "*postgres*": "deny",
+      "*.env*": "deny",
+      "*Get-Service*": "deny",
+      "*sc.exe*": "deny"
+    }
+  }
+}
