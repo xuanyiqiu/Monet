@@ -7,6 +7,7 @@ import dev.monet.app.core.auth.SessionStore
 import dev.monet.app.core.auth.SupabaseAuthApi
 import dev.monet.app.core.data.AnnotationCache
 import dev.monet.app.core.data.CachingMonetApi
+import dev.monet.app.core.data.NotebookRepository
 import dev.monet.app.core.data.ReadingPositionStore
 import dev.monet.app.core.network.FakeMonetApi
 import dev.monet.app.core.network.MonetApi
@@ -28,6 +29,8 @@ class AppContainer(context: Context) {
     val readingPositions = ReadingPositionStore(File(context.filesDir, "reading_positions.json"))
 
     private val annotations = AnnotationCache(File(context.cacheDir, "annotations"))
+
+    val notebook = NotebookRepository(File(context.filesDir, "notebook.json"))
 
     /**
      * Delegates to fake or remote per call, so flipping the dev switch in Settings takes effect
