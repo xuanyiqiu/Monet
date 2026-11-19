@@ -4,13 +4,14 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from uuid import UUID
 
+import redis
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
 from monet_api import __version__, db, errors
 from monet_api.annotator import Annotator
-from monet_api.auth import RateLimiter
+from monet_api.auth import RateLimiter, RedisRateLimiter
 from monet_api.cache import MemoryCache, TieredCache
 from monet_api.config import Settings, get_settings
 from monet_api.documents.service import PROCESS_JOB, DocumentService
@@ -48,6 +49,15 @@ def build_blob_store(settings: Settings) -> BlobStore:
     if settings.supabase_url and settings.supabase_service_key:
         return SupabaseBlobStore(settings.supabase_url, settings.supabase_service_key, settings.supabase_bucket)
     return LocalBlobStore(settings.blob_dir)
+
+
+def build_rate_limiter(settings: Settings) -> RateLimiter | RedisRateLimiter:
+    if settings.redis_url:
+        return RedisRateLimiter(
+            redis.Redis.from_url(settings.redis_url, socket_connect_timeout=0.2, socket_timeout=0.2),
+            settings.rate_limit_per_minute,
+        )
+    return RateLimiter(settings.rate_limit_per_minute)
 
 
 def create_app(settings: Settings | None = None, llm: LLMProvider | None = None) -> FastAPI:
@@ -95,7 +105,7 @@ def create_app(settings: Settings | None = None, llm: LLMProvider | None = None)
         InstrumentedProvider(llm, metrics) if llm else build_provider(settings, metrics),
         TieredCache(MemoryCache(), settings.redis_url),
     )
-    app.state.rate_limiter = RateLimiter(settings.rate_limit_per_minute)
+    app.state.rate_limiter = build_rate_limiter(settings)
     repo: DocumentRepo = db.PgDocumentRepo(engine) if engine is not None else MemoryDocumentRepo()
     app.state.queue = PgJobQueue(engine) if engine is not None else None
     app.state.feedback = db.PgFeedbackRepo(engine) if engine is not None else MemoryFeedbackRepo()

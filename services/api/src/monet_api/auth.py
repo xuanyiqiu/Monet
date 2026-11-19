@@ -1,13 +1,18 @@
+import logging
+import math
 import re
 import time
 from collections import defaultdict
+from collections.abc import Callable
 
 import jwt
+import redis
 from fastapi import Depends, Request
 
 from monet_api.config import Settings
 from monet_api.errors import Problem
 
+log = logging.getLogger(__name__)
 _DEV_TOKEN = re.compile(r"^dev:([A-Za-z0-9_.-]{1,64})$")
 
 
@@ -86,6 +91,34 @@ class RateLimiter:
             retry = int((cost - tokens) / self.rate) + 1
             raise Problem(429, "Too many requests", f"Retry in {retry}s", headers={"Retry-After": str(retry)})
         self._buckets[user] = (tokens - cost, now)
+
+
+class RedisRateLimiter:
+    """Per-user fixed one-minute window counted in Redis, shared by every instance."""
+
+    def __init__(self, client: redis.Redis, per_minute: int, clock: Callable[[], float] = time.time) -> None:
+        self._client = client
+        self._per_minute = per_minute
+        self._clock = clock
+
+    def take(self, user: str, cost: float = 1.0) -> None:
+        now = self._clock()
+        window = int(now // 60)
+        key = f"monet:rl:{user}:{window}"
+        amount = max(1, math.ceil(cost))
+        try:
+            count = self._client.incr(key, amount)
+        except Exception as e:
+            log.warning("redis rate limit failed: %s", e)
+            return
+        if count == amount:
+            try:
+                self._client.expire(key, 120)
+            except Exception as e:
+                log.warning("redis rate limit failed: %s", e)
+        if count > self._per_minute:
+            retry = 60 - int(now % 60)
+            raise Problem(429, "Too many requests", f"Retry in {retry}s", headers={"Retry-After": str(retry)})
 
 
 def rate_limited_user(request: Request, user: str = Depends(current_user)) -> str:
