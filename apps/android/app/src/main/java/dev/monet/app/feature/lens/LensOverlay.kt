@@ -29,6 +29,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import dev.monet.app.core.settings.bubbleIdleAlpha
+import dev.monet.app.core.settings.linesLabel
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -80,7 +82,7 @@ fun LensOverlay(state: LensUiState, expanded: Boolean, rightSide: Boolean, actio
             idle = true
         }
     }
-    val alpha by animateFloatAsState(if (idle) 0.6f else 1f, label = "bubbleAlpha")
+    val alpha by animateFloatAsState(if (idle) bubbleIdleAlpha(state.overlayOpacity) else 1f, label = "bubbleAlpha")
 
     Column(
         Modifier.fillMaxWidth().alpha(alpha),
@@ -206,7 +208,7 @@ private fun ModePill(state: LensUiState, actions: LensOverlayActions) {
                 StepButton("–", "Fewer lines", state.linesPerStep > MIN_LINES_PER_STEP) {
                     actions.onLines(stepLines(state.linesPerStep, -1))
                 }
-                Text("${state.linesPerStep}", style = Monet.type.title, color = c.ink)
+                Text(linesLabel(state.linesPerStep), style = Monet.type.title, color = c.ink)
                 StepButton("+", "More lines", state.linesPerStep < MAX_LINES_PER_STEP) {
                     actions.onLines(stepLines(state.linesPerStep, +1))
                 }

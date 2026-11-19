@@ -4,6 +4,7 @@ import android.view.KeyEvent
 import android.view.View
 import android.view.WindowManager
 import android.widget.FrameLayout
+import kotlinx.coroutines.launch
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
@@ -70,6 +71,7 @@ internal class DetailOverlay(
         val voice = Speaker(host.service)
         controller = detail
         speaker = voice
+        host.scope.launch { host.container.settingsRepository.settings.collect { voice.speed = it.ttsSpeed } }
 
         val density = host.service.resources.displayMetrics.density
         val bottomInset = (host.navigationBarPx() / density).dp

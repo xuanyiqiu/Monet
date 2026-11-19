@@ -44,6 +44,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.monet.app.BuildConfig
 import dev.monet.app.core.network.Lang
+import dev.monet.app.core.network.SourceLang
+import dev.monet.app.core.settings.ChipSize
+import dev.monet.app.core.settings.LINES_OPTIONS
+import dev.monet.app.core.settings.OPACITY_OPTIONS
+import dev.monet.app.core.settings.TtsSpeed
+import dev.monet.app.core.settings.linesLabel
 import dev.monet.app.core.settings.PinyinStyle
 import dev.monet.app.core.settings.Settings
 import dev.monet.app.core.settings.ThemeMode
@@ -59,6 +65,10 @@ class SettingsActions(
     val onPinyinStyle: (PinyinStyle) -> Unit,
     val onLinesPerStep: (Int) -> Unit,
     val onThemeMode: (ThemeMode) -> Unit,
+    val onSourceLang: (SourceLang) -> Unit = {},
+    val onOverlayOpacity: (Int) -> Unit = {},
+    val onChipSize: (ChipSize) -> Unit = {},
+    val onTtsSpeed: (TtsSpeed) -> Unit = {},
     val onUseFakeApi: (Boolean) -> Unit,
     val onApiBaseUrl: (String) -> Unit,
     val onAuthToken: (String) -> Unit,
@@ -98,6 +108,19 @@ fun SettingsScreen(
                 onSelect = actions.onTargetLang,
             )
         }
+        Group("TEXT LANGUAGE") {
+            Choices(
+                options = listOf(
+                    SourceLang.AUTO to "Auto",
+                    SourceLang.ZH to "中文",
+                    SourceLang.ES to "Español",
+                    SourceLang.EN to "English",
+                ),
+                selected = settings.sourceLang,
+                onSelect = actions.onSourceLang,
+                description = "Language of the text you read",
+            )
+        }
         Group("PINYIN") {
             Choices(
                 options = listOf(
@@ -111,7 +134,36 @@ fun SettingsScreen(
             )
         }
         Group("LINES PER STEP") {
-            Stepper(settings.linesPerStep, 1..5, actions.onLinesPerStep)
+            Choices(
+                options = LINES_OPTIONS.map { it to linesLabel(it) },
+                selected = settings.linesPerStep,
+                onSelect = actions.onLinesPerStep,
+                description = "Lines per step",
+            )
+        }
+        Group("OVERLAY OPACITY") {
+            Choices(
+                options = OPACITY_OPTIONS.map { it to "$it%" },
+                selected = settings.overlayOpacity,
+                onSelect = actions.onOverlayOpacity,
+                description = "Overlay opacity when idle",
+            )
+        }
+        Group("CHIP TEXT SIZE") {
+            Choices(
+                options = listOf(ChipSize.SMALL to "Small", ChipSize.NORMAL to "Normal", ChipSize.LARGE to "Large"),
+                selected = settings.chipSize,
+                onSelect = actions.onChipSize,
+                description = "Translation chip text size",
+            )
+        }
+        Group("SPEECH SPEED") {
+            Choices(
+                options = listOf(TtsSpeed.SLOW to "Slow", TtsSpeed.NORMAL to "Normal", TtsSpeed.FAST to "Fast"),
+                selected = settings.ttsSpeed,
+                onSelect = actions.onTtsSpeed,
+                description = "Speech speed",
+            )
         }
         Group("THEME") {
             Choices(
@@ -173,8 +225,14 @@ private fun Group(title: String, content: @Composable () -> Unit) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun <T> Choices(options: List<Pair<T, String>>, selected: T, onSelect: (T) -> Unit) {
+private fun <T> Choices(
+    options: List<Pair<T, String>>,
+    selected: T,
+    onSelect: (T) -> Unit,
+    description: String? = null,
+) {
     FlowRow(
+        modifier = if (description != null) Modifier.semantics { contentDescription = description } else Modifier,
         horizontalArrangement = Arrangement.spacedBy(Spacing.x2),
         verticalArrangement = Arrangement.spacedBy(Spacing.x2),
     ) {
@@ -197,24 +255,6 @@ private fun Chip(label: String, selected: Boolean, onClick: () -> Unit) {
             .clickable(onClick = onClick)
             .padding(horizontal = Spacing.x4, vertical = Spacing.x3),
     )
-}
-
-@Composable
-private fun Stepper(value: Int, range: IntRange, onChange: (Int) -> Unit) {
-    val c = Monet.colors
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.x2)) {
-        TextButton(
-            onClick = { onChange(value - 1) },
-            enabled = value > range.first,
-            modifier = Modifier.semantics { contentDescription = "Fewer lines" },
-        ) { Text("–", style = Monet.type.title, color = if (value > range.first) c.ink else c.inkFaint) }
-        Text("$value", style = Monet.type.title, color = c.ink)
-        TextButton(
-            onClick = { onChange(value + 1) },
-            enabled = value < range.last,
-            modifier = Modifier.semantics { contentDescription = "More lines" },
-        ) { Text("+", style = Monet.type.title, color = if (value < range.last) c.ink else c.inkFaint) }
-    }
 }
 
 /** Text field persisted on every edit; the local copy keeps the cursor stable while DataStore catches up. */
@@ -242,7 +282,10 @@ private fun CommitField(label: String, value: String, onCommit: (String) -> Unit
     )
 }
 
-private val previewActions = SettingsActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {})
+private val previewActions = SettingsActions(
+    onBack = {}, onTargetLang = {}, onPinyinStyle = {}, onLinesPerStep = {}, onThemeMode = {}, onUseFakeApi = {},
+    onApiBaseUrl = {}, onAuthToken = {}, onReplayIntro = {}, onSignOut = {},
+)
 
 @Preview(name = "Settings light", showBackground = true, widthDp = 360, heightDp = 780)
 @Composable

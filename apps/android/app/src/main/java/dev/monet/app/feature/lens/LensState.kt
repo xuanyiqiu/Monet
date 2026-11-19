@@ -14,6 +14,8 @@ data class LensUiState(
     val running: Boolean = false,
     val mode: LensMode = LensMode.AUTO,
     val linesPerStep: Int = 2,
+    /** Resting opacity of the bubble, in percent. */
+    val overlayOpacity: Int = dev.monet.app.core.settings.DEFAULT_OPACITY_PERCENT,
     val lastRead: List<dev.monet.app.feature.lens.capture.TextBlock> = emptyList(),
     val reading: ReadingProgress? = null,
     /** Android ended the screen capture (lock screen, "stop sharing"); the user has to allow it again. */
@@ -29,9 +31,9 @@ object LensState {
 }
 
 const val MIN_LINES_PER_STEP = 1
-const val MAX_LINES_PER_STEP = 5
+const val MAX_LINES_PER_STEP = dev.monet.app.feature.lens.capture.LINES_ALL
 
-fun stepLines(current: Int, delta: Int): Int = (current + delta).coerceIn(MIN_LINES_PER_STEP, MAX_LINES_PER_STEP)
+fun stepLines(current: Int, delta: Int): Int = dev.monet.app.core.settings.stepLinesOption(current, delta)
 
 /** The bubble snaps to whichever screen edge its window is closer to. */
 fun snapToEdgeX(windowX: Int, windowWidth: Int, screenWidth: Int): Int =

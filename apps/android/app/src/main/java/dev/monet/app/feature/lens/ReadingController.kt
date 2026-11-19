@@ -12,6 +12,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
 import dev.monet.app.core.network.AnnotateLinesRequest
+import dev.monet.app.core.settings.readScrimAlpha
 import dev.monet.app.core.network.AnnotationContext
 import dev.monet.app.core.network.ApiException
 import dev.monet.app.core.network.LineInput
@@ -125,7 +126,16 @@ internal class ReadingController(
     }
 
     fun applyChipTextScale(scale: Float) {
+        if (chipTextScale == scale) return
         chipTextScale = scale
+        if (ui != null) publish()
+    }
+
+    fun setOverlayOpacity(percent: Int) {
+        val alpha = readScrimAlpha(percent)
+        val state = ui ?: return
+        if (state.scrimAlpha == alpha) return
+        ui = state.copy(scrimAlpha = alpha)
     }
 
     /** The Lens moved or resized one of its own controls; that is not the page changing. */
@@ -185,10 +195,11 @@ internal class ReadingController(
                     val background = medianArgb(borderPixels(frame.width, frame.height, unit.bounds) { x, y -> frame.getPixel(x, y) })
                     unit.id to ChipStyle(background, pickTextColor(background))
                 }
-                val linesPerStep = host.container.settingsRepository.settings.first().linesPerStep
+                val settings0 = host.container.settingsRepository.settings.first()
+                val linesPerStep = settings0.linesPerStep
                 val index = if (fresh) 0 else reanchorIndex(units, history)
                 clearChips()
-                ui = ReadingUiState(ReadingSession(units, linesPerStep, index), styles, emptyMap())
+                ui = ReadingUiState(ReadingSession(units, linesPerStep, index), styles, emptyMap(), readScrimAlpha(settings0.overlayOpacity))
                 ensureBand()
                 setHidden(false)
                 publish()
@@ -412,9 +423,9 @@ internal class ReadingController(
         host.scope.launch {
             val settings = host.container.settingsRepository.settings.first()
             // Cached translations belong to one target language.
-            if (cacheLang != settings.targetLang.name) {
+            if (cacheLang != "${settings.targetLang.name}|${settings.sourceLang.name}") {
                 translations.clear()
-                cacheLang = settings.targetLang.name
+                cacheLang = "${settings.targetLang.name}|${settings.sourceLang.name}"
             }
             val wanted = (state.session.active + state.session.upcoming()).filter { unit ->
                 val cached = translations[unit.text]
@@ -431,6 +442,7 @@ internal class ReadingController(
                     AnnotateLinesRequest(
                         lines = wanted.map { LineInput(it.id, it.text.take(MAX_LINE_CHARS)) },
                         targetLang = settings.targetLang,
+                        sourceLang = settings.sourceLang,
                         context = AnnotationContext(
                             surrounding = state.session.units.joinToString(" ") { it.text }.take(MAX_CONTEXT_CHARS),
                             app = SCREEN_OCR_HINT,
