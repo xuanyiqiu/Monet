@@ -53,6 +53,14 @@ def make_store(blobs: dict[str, bytes], **kwargs) -> SupabaseBlobStore:
     return SupabaseBlobStore("https://project.supabase.co/", SERVICE_KEY, BUCKET, client=client)
 
 
+def make_fixed_store(status: int, body: dict | None) -> SupabaseBlobStore:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(status, json=body)
+
+    client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    return SupabaseBlobStore("https://project.supabase.co/", SERVICE_KEY, BUCKET, client=client)
+
+
 async def test_put_then_get_round_trip():
     blobs: dict[str, bytes] = {}
     store = make_store(blobs)
@@ -171,3 +179,50 @@ def test_lifespan_closes_blob_store(settings, fake_llm):
 def test_lifespan_with_local_blob_store(settings, fake_llm):
     with TestClient(create_app(_safe_settings(settings), llm=fake_llm)):
         pass
+
+
+async def test_get_missing_object_400_no_such_key_raises_file_not_found():
+    store = make_fixed_store(
+        400, {"statusCode": "404", "error": "not_found", "code": "NoSuchKey"}
+    )
+    with pytest.raises(FileNotFoundError):
+        await store.get("a.pdf")
+
+
+async def test_delete_missing_object_400_no_such_key_does_not_raise():
+    store = make_fixed_store(
+        400, {"statusCode": "404", "error": "not_found", "code": "NoSuchKey"}
+    )
+    await store.delete("a.pdf")
+
+
+async def test_missing_bucket_400_no_such_bucket_raises_runtime_error():
+    store = make_fixed_store(
+        400, {"statusCode": "404", "error": "Bucket not found", "code": "NoSuchBucket"}
+    )
+    with pytest.raises(RuntimeError) as exc:
+        await store.get("a.pdf")
+    assert "400" in str(exc.value)
+    assert "a.pdf" not in str(exc.value)
+    assert "Bucket not found" not in str(exc.value)
+    assert "NoSuchBucket" not in str(exc.value)
+    assert SERVICE_KEY not in str(exc.value)
+    with pytest.raises(RuntimeError) as exc:
+        await store.delete("a.pdf")
+    assert "400" in str(exc.value)
+    assert "a.pdf" not in str(exc.value)
+    assert "Bucket not found" not in str(exc.value)
+    assert "NoSuchBucket" not in str(exc.value)
+    assert SERVICE_KEY not in str(exc.value)
+
+
+async def test_get_400_without_status_code_raises_runtime_error():
+    store = make_fixed_store(400, {"message": "bad request"})
+    with pytest.raises(RuntimeError):
+        await store.get("a.pdf")
+
+
+async def test_get_500_with_404_status_code_body_raises_runtime_error():
+    store = make_fixed_store(500, {"statusCode": "404", "code": "NoSuchKey"})
+    with pytest.raises(RuntimeError):
+        await store.get("a.pdf")
