@@ -28,10 +28,13 @@ object SessionPolicy {
      * wastes a network call on every request. [nowEpochSec] is passed in (not read from the clock) so
      * this stays a pure function that unit tests can drive.
      */
-    fun needsRefresh(session: Session, nowEpochSec: Long): Boolean {
-        // TODO(human): decide when a token counts as "about to expire" (think of a safety margin in
-        // seconds, because the request still has to travel to the server). Returning true always
-        // works but renews on every call; replace it with a comparison against session.expiresAtEpochSec.
-        return true
-    }
+    fun needsRefresh(session: Session, nowEpochSec: Long): Boolean =
+        nowEpochSec >= session.expiresAtEpochSec - REFRESH_MARGIN_SEC
+
+    /**
+     * Renew this many seconds before the token expires. The request still has to reach the server,
+     * and phone and server clocks differ by a few seconds. Against a one-hour token it renews about
+     * once an hour.
+     */
+    const val REFRESH_MARGIN_SEC = 60L
 }

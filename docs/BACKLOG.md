@@ -47,7 +47,7 @@ Legend: `[ ]` todo · `[~] (branch)` in progress · `[x]` done. Work top-down wi
 - [ ] F-17 Typography: downloadable fonts (IBM Plex Sans, Source Serif 4, Noto Serif SC) with system fallback. AC: screenshot showing the real faces.
 - [ ] F-18 Reader round 2: remembers the reading position, long-press opens the Detail sheet, upload from the share sheet, retry for failed pages/documents. AC: emulator check.
 - [ ] F-19 Release build: R8 + resource shrinking, per-ABI APKs, release signing from a local keystore (never committed), version from git. AC: release APK installs and runs the Lens on the emulator; size reported.
-- [~] (feat/android-auth) F-20 Accounts: Supabase Auth email+password sign-in with a persistent session (refresh token renewed in the background). Supabase project now exists. Pending: `SessionPolicy.needsRefresh` (TODO(human)), sign-out in Settings.
+- [~] (feat/android-auth) F-20 Accounts: Supabase Auth email+password sign-in with a persistent session (refresh token renewed in the background). Supabase project now exists. Pending: sign-out in Settings.
 
 ## Later
 - Notebook + spaced repetition, accounts sync, offline pinyin, EPUB/images, scanned-PDF OCR.
