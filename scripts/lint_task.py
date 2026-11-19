@@ -89,7 +89,7 @@ def lint(path: Path) -> tuple[list[str], list[str]]:
         elif is_new and full.exists():
             errors.append(f"marked NEW but already exists: {p}")
         elif is_new and not full.parent.exists():
-            errors.append(f"NEW file's folder does not exist: {p}")
+            warns.append(f"NEW file's folder does not exist yet (the worker creates it): {p}")
         elif not is_new and not full.exists():
             errors.append(f"file to edit does not exist (mark it NEW if it should be created): {p}")
     if not paths:

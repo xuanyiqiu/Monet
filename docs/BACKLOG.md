@@ -39,13 +39,16 @@ Legend: `[ ]` todo · `[~] (branch)` in progress · `[x]` done. Work top-down wi
 
 
 ### Android round 2 (hardening, missing spec features, release)
-- [ ] F-12 Lens robustness: latest-frame cache (no "could not capture" on a static screen), stop cleanly when Android ends the projection (lock screen, system chip), rotation, pill kept on screen, no bubble flicker on capture. AC: unit tests for the pure parts; emulator check incl. rotation and projection stop.
-- [ ] F-13 Auto mode follows the screen: `FrameGate` (frame diff + ~300 ms settle) re-reads after a scroll and re-anchors on the first unread unit; chips are tappable (open the Detail sheet); a ⌄ handle advances the band. AC: `FrameGate` and re-anchor logic unit-tested; emulator scroll test.
-- [ ] F-14 Detail sheet completeness: Save to Notebook, Report a bad translation (`/v1/feedback`), tap a token to hear it alone, second tap on ▶ plays slow; on-device annotation cache so repeated text is instant and works offline. AC: unit tests; emulator check offline.
-- [ ] F-15 Notebook: saved lines and expressions with their full Detail data (offline), search, delete, and a daily spaced-repetition review (5–10 cards). AC: scheduler unit-tested; persistence round-trip test.
-- [ ] F-16 Settings from PRODUCT §2.5: source language, lines per step (1, 2, 3, 5, 10, All), overlay opacity, chip text size, TTS speed. AC: persisted + applied; unit tests.
+- [x] F-12 (done in "lens round 2", e7738af; emulator pass for rotation and lock-screen stop still to do) Lens robustness: latest-frame cache (no "could not capture" on a static screen), stop cleanly when Android ends the projection (lock screen, system chip), rotation, pill kept on screen, no bubble flicker on capture. AC: unit tests for the pure parts; emulator check incl. rotation and projection stop.
+- [x] F-13 (done in "lens round 2"; open: swipe handle on the band) Auto mode follows the screen: `FrameGate` (frame diff + ~300 ms settle) re-reads after a scroll and re-anchors on the first unread unit; chips are tappable (open the Detail sheet); a ⌄ handle advances the band. AC: `FrameGate` and re-anchor logic unit-tested; emulator scroll test.
+- [~] (feat/f14a-annotation-cache) F-14a Install the on-device annotation cache (`CachingMonetApi` around the real API only) + unit tests. Spec `docs/tasks/F-14a.md`.
+- [ ] F-14b Detail sheet actions: Save to Notebook (needs F-15a), Report a bad translation via `sendFeedback` (API exists, unused), tap a token to hear it alone, second tap on the play button plays slow. AC: unit tests for the view-model logic; emulator check.
+- [ ] F-15a Wire `NotebookRepository` (exists, never constructed) into `AppContainer`; unit tests for the SM-2 scheduler, `searchNotebook` and the persistence round trip.
+- [ ] F-15b Notebook screen (list, search, delete) and a Home entry. AC: emulator check.
+- [ ] F-15c Daily review (5-10 cards) over `dueEntries`/`review`. AC: emulator check.
+- [ ] F-16 Settings from PRODUCT §2.5 still missing: source language, lines per step options 1/2/3/5/10/All (today 1-5), overlay opacity, chip text size (`applyChipTextScale` exists, never called), TTS speed (hard-coded in `Speaker.kt`). AC: persisted + applied; unit tests.
 - [ ] F-17 Typography: downloadable fonts (IBM Plex Sans, Source Serif 4, Noto Serif SC) with system fallback. AC: screenshot showing the real faces.
-- [ ] F-18 Reader round 2: remembers the reading position, long-press opens the Detail sheet, upload from the share sheet, retry for failed pages/documents. AC: emulator check.
+- [ ] F-18 Reader round 2 still missing: remember the reading position, long-press opens the Detail sheet, upload from the share sheet (PDF/DOCX/TXT `ACTION_SEND`), retry for FAILED documents (page retry exists). AC: emulator check.
 - [x] F-19a APK versioning: `versionName` from the latest `v*` git tag (`git describe`), `versionCode` = commit count, both overridable with `-Pmonet.versionName/-Pmonet.versionCode`, `printVersion` task. AC: spec checks in `docs/tasks/F-19a.md`; debug build green.
 - [x] F-19b Per-ABI release APKs named `monet-<versionName>-<abi>.apk` (plus universal) and Settings shows "Monet x (code)". AC: spec checks in `docs/tasks/F-19b.md`.
 - [x] F-19d R8 + resource shrinking for release (keep rules for kotlinx.serialization, Retrofit, ML Kit). AC: release APK installs and runs the Lens on the emulator; size reported per ABI.
