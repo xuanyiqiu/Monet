@@ -46,7 +46,7 @@ Legend: `[ ]` todo · `[~] (branch)` in progress · `[x]` done. Work top-down wi
 - [~] (feat/f15a-notebook-core) F-15a Wire `NotebookRepository` (exists, never constructed) into `AppContainer`; unit tests for the SM-2 scheduler, `searchNotebook` and the persistence round trip.
 - [ ] F-15b Notebook screen (list, search, delete) and a Home entry. AC: emulator check.
 - [ ] F-15c Daily review (5-10 cards) over `dueEntries`/`review`. AC: emulator check.
-- [ ] F-16 Settings from PRODUCT §2.5 still missing: source language, lines per step options 1/2/3/5/10/All (today 1-5), overlay opacity, chip text size (`applyChipTextScale` exists, never called), TTS speed (hard-coded in `Speaker.kt`). AC: persisted + applied; unit tests.
+- [x] F-16 Settings from PRODUCT §2.5: source language, lines per step 1/2/3/5/10/All, overlay opacity, chip text size, speech speed (Sonnet agent; unit-tested, not yet checked visually on the emulator).
 - [ ] F-17 Typography: downloadable fonts (IBM Plex Sans, Source Serif 4, Noto Serif SC) with system fallback. AC: screenshot showing the real faces.
 - [ ] F-18 Reader round 2 still missing: remember the reading position, long-press opens the Detail sheet, upload from the share sheet (PDF/DOCX/TXT `ACTION_SEND`), retry for FAILED documents (page retry exists). AC: emulator check.
 - [x] F-19a APK versioning: `versionName` from the latest `v*` git tag (`git describe`), `versionCode` = commit count, both overridable with `-Pmonet.versionName/-Pmonet.versionCode`, `printVersion` task. AC: spec checks in `docs/tasks/F-19a.md`; debug build green.
