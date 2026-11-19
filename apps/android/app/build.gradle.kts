@@ -12,6 +12,31 @@ val localProps = Properties().apply {
     rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
 }
 
+fun gitOutput(vararg args: String): String? {
+    return try {
+        val output = project.providers.exec {
+            commandLine("git", *args)
+            workingDir = project.rootProject.projectDir
+            isIgnoreExitValue = true
+        }
+        val exitValue = output.result.get().exitValue
+        val text = output.standardOutput.asText.get().trim()
+        if (exitValue != 0 || text.isEmpty()) null else text
+    } catch (e: Exception) {
+        null
+    }
+}
+
+val monetVersionCode: Int =
+    project.providers.gradleProperty("monet.versionCode").orNull?.takeIf { it.isNotBlank() }?.toInt()
+        ?: gitOutput("rev-list", "--count", "HEAD")?.toIntOrNull()
+        ?: 1
+
+val monetVersionName: String =
+    project.providers.gradleProperty("monet.versionName").orNull?.takeIf { it.isNotBlank() }
+        ?: gitOutput("describe", "--tags", "--match", "v[0-9]*", "--dirty=-dirty")?.removePrefix("v")
+        ?: "0.1.0-dev"
+
 android {
     namespace = "dev.monet.app"
     compileSdk = 35
@@ -20,8 +45,8 @@ android {
         applicationId = "dev.monet.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = monetVersionCode
+        versionName = monetVersionName
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // Production backend. Both URLs are public; the publishable key only identifies the project.
         buildConfigField("String", "API_BASE_URL", "\"https://monet-4uvusyivrq-ew.a.run.app\"")
@@ -84,4 +109,10 @@ dependencies {
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.runner)
     testImplementation(libs.kotlinx.coroutines.test)
+}
+
+tasks.register("printVersion") {
+    doLast {
+        println("monet-version $monetVersionName $monetVersionCode")
+    }
 }
