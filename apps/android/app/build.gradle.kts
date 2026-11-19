@@ -27,6 +27,20 @@ fun gitOutput(vararg args: String): String? {
     }
 }
 
+fun signingProp(name: String): String? {
+    val value = if (project.hasProperty(name)) {
+        project.property(name)?.toString()
+    } else {
+        localProps.getProperty(name)
+    }
+    return value?.takeIf { it.isNotBlank() }
+}
+
+val releaseStoreFile: String? = signingProp("monet.release.storeFile")
+if (releaseStoreFile != null && !file(releaseStoreFile).exists()) {
+    throw GradleException("Release keystore not found: $releaseStoreFile")
+}
+
 val monetVersionCode: Int =
     project.providers.gradleProperty("monet.versionCode").orNull?.takeIf { it.isNotBlank() }?.toInt()
         ?: gitOutput("rev-list", "--count", "HEAD")?.toIntOrNull()
@@ -58,9 +72,22 @@ android {
         )
     }
 
+    signingConfigs {
+        if (releaseStoreFile != null) {
+            create("release") {
+                storeFile = file(releaseStoreFile)
+                storePassword = signingProp("monet.release.storePassword")
+                keyAlias = signingProp("monet.release.keyAlias")
+                keyPassword = signingProp("monet.release.keyPassword")
+            }
+        }
+    }
     buildTypes {
         release {
             isMinifyEnabled = false
+            if (releaseStoreFile != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
     splits {
@@ -131,5 +158,11 @@ dependencies {
 tasks.register("printVersion") {
     doLast {
         println("monet-version $monetVersionName $monetVersionCode")
+    }
+}
+
+tasks.register("printSigning") {
+    doLast {
+        println("monet-signing ${releaseStoreFile != null}")
     }
 }
