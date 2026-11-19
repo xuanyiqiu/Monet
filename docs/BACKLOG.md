@@ -46,8 +46,11 @@ Legend: `[ ]` todo · `[~] (branch)` in progress · `[x]` done. Work top-down wi
 - [ ] F-16 Settings from PRODUCT §2.5: source language, lines per step (1, 2, 3, 5, 10, All), overlay opacity, chip text size, TTS speed. AC: persisted + applied; unit tests.
 - [ ] F-17 Typography: downloadable fonts (IBM Plex Sans, Source Serif 4, Noto Serif SC) with system fallback. AC: screenshot showing the real faces.
 - [ ] F-18 Reader round 2: remembers the reading position, long-press opens the Detail sheet, upload from the share sheet, retry for failed pages/documents. AC: emulator check.
-- [ ] F-19 Release build: R8 + resource shrinking, per-ABI APKs, release signing from a local keystore (never committed), version from git. AC: release APK installs and runs the Lens on the emulator; size reported.
-- [ ] F-20 Accounts: Supabase Auth sign-in and token refresh (blocked: needs the Supabase project, see PROGRESS "Questions for the user").
+- [x] F-19a APK versioning: `versionName` from the latest `v*` git tag (`git describe`), `versionCode` = commit count, both overridable with `-Pmonet.versionName/-Pmonet.versionCode`, `printVersion` task. AC: spec checks in `docs/tasks/F-19a.md`; debug build green.
+- [x] F-19b Per-ABI release APKs named `monet-<versionName>-<abi>.apk` (plus universal) and Settings shows "Monet x (code)". AC: spec checks in `docs/tasks/F-19b.md`.
+- [ ] F-19d R8 + resource shrinking for release (keep rules for kotlinx.serialization, Retrofit, ML Kit). AC: release APK installs and runs the Lens on the emulator; size reported per ABI.
+- [ ] F-19c Release signing and publish: signing config read from a local keystore via `local.properties` (never committed), `scripts/release_android.ps1` (tag, build, sign, `apksigner verify`, checksum), GitHub Release notes. Needs `gh auth login` and a keystore created by the user. AC: signed APK verifies; upgrade-install over the previous version keeps the session.
+- [x] F-20 Accounts: Supabase Auth email+password sign-in with a persistent session (refresh token renewed in the background). Supabase project now exists. Sign-out is in Settings (ACCOUNT group, shown when signed in).
 
 ## Later
 - Notebook + spaced repetition, accounts sync, offline pinyin, EPUB/images, scanned-PDF OCR.

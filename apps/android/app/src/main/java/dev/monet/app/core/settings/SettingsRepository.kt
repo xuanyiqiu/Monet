@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import dev.monet.app.BuildConfig
 import dev.monet.app.core.network.Lang
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -22,8 +23,9 @@ data class Settings(
     val linesPerStep: Int = 2,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     /** Dev switch: use [dev.monet.app.core.network.FakeMonetApi] instead of the server. */
-    val useFakeApi: Boolean = true,
-    val apiBaseUrl: String = "http://10.0.2.2:8000",
+    val useFakeApi: Boolean = false,
+    /** Production by default; point it at `http://10.0.2.2:8000` in Settings to use a local API. */
+    val apiBaseUrl: String = BuildConfig.API_BASE_URL,
     val authToken: String = "dev:android",
     val onboardingDone: Boolean = false,
     /** The "Android will ask to capture your screen" notice was shown once. */

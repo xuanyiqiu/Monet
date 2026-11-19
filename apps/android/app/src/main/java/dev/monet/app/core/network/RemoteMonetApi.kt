@@ -3,6 +3,7 @@ package dev.monet.app.core.network
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import java.io.IOException
 import java.util.concurrent.TimeUnit
+import okhttp3.Authenticator
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
@@ -50,6 +51,11 @@ internal interface MonetService {
 class RemoteMonetApi(
     baseUrl: String,
     private val token: () -> String,
+    /**
+     * Called once when the server answers 401: returns a freshly renewed token to retry with, or null
+     * to give up. Runs on an OkHttp thread, so blocking there is fine.
+     */
+    private val renewToken: (() -> String?)? = null,
     client: OkHttpClient = OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(60, TimeUnit.SECONDS)
@@ -60,6 +66,16 @@ class RemoteMonetApi(
         .baseUrl(if (baseUrl.endsWith("/")) baseUrl else "$baseUrl/")
         .client(
             client.newBuilder()
+                .authenticator(Authenticator { _, response ->
+                    // priorResponse != null means this request was already retried: do not loop.
+                    if (renewToken == null || response.priorResponse != null) {
+                        null
+                    } else {
+                        renewToken.invoke()?.let { fresh ->
+                            response.request.newBuilder().header("Authorization", "Bearer $fresh").build()
+                        }
+                    }
+                })
                 .addInterceptor(Interceptor { chain ->
                     chain.proceed(
                         chain.request().newBuilder()

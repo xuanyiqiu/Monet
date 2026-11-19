@@ -29,7 +29,10 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import dev.monet.app.core.auth.AuthState
 import dev.monet.app.core.settings.ThemeMode
+import dev.monet.app.feature.auth.LoginScreen
+import dev.monet.app.feature.auth.LoginViewModel
 import dev.monet.app.feature.detail.DetailSheet
 import dev.monet.app.feature.home.HomeScreen
 import dev.monet.app.feature.home.MainViewModel
@@ -136,7 +139,27 @@ class MainActivity : ComponentActivity() {
                             onFinish = { settingsViewModel.setOnboardingDone(true) },
                         )
                     } else {
-                        AppNavigation(settingsViewModel)
+                        // Sign-in is required only against the production API. A local dev API
+                        // (changed in Settings) accepts the `dev:` token and skips it.
+                        val authState by container.auth.state.collectAsStateWithLifecycle(initialValue = AuthState.Loading)
+                        val needsLogin = !s.useFakeApi && s.apiBaseUrl == BuildConfig.API_BASE_URL
+                        when {
+                            needsLogin && authState == AuthState.Loading ->
+                                Box(Modifier.fillMaxSize().background(Monet.colors.paper))
+                            needsLogin && authState == AuthState.SignedOut -> {
+                                val loginViewModel: LoginViewModel = viewModel(
+                                    factory = viewModelFactory { initializer { LoginViewModel(container.auth) } },
+                                )
+                                val login by loginViewModel.state.collectAsStateWithLifecycle()
+                                LoginScreen(
+                                    state = login,
+                                    onEmail = loginViewModel::onEmail,
+                                    onPassword = loginViewModel::onPassword,
+                                    onSubmit = loginViewModel::submit,
+                                )
+                            }
+                            else -> AppNavigation(settingsViewModel)
+                        }
                     }
                 }
                 sheetText?.let { DetailSheet(text = it, onDismiss = viewModel::dismiss) }
@@ -188,7 +211,14 @@ class MainActivity : ComponentActivity() {
             }
             Screen.Settings -> SettingsScreen(
                 settings = settings,
+                signedIn = container.auth.state
+                    .collectAsStateWithLifecycle(initialValue = AuthState.Loading).value == AuthState.SignedIn,
                 actions = SettingsActions(
+                    onSignOut = {
+                        // Back to Home first, so the next sign-in does not land inside Settings.
+                        viewModel.open(Screen.Home)
+                        lifecycleScope.launch { container.auth.signOut() }
+                    },
                     onBack = { viewModel.back() },
                     onTargetLang = { settingsViewModel.setTargetLang(it) },
                     onPinyinStyle = { settingsViewModel.setPinyinStyle(it) },

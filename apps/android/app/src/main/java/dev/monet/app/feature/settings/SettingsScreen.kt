@@ -42,10 +42,12 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import dev.monet.app.BuildConfig
 import dev.monet.app.core.network.Lang
 import dev.monet.app.core.settings.PinyinStyle
 import dev.monet.app.core.settings.Settings
 import dev.monet.app.core.settings.ThemeMode
+import dev.monet.app.core.settings.formatVersion
 import dev.monet.app.ui.theme.Monet
 import dev.monet.app.ui.theme.MonetTheme
 import dev.monet.app.ui.theme.Radius
@@ -61,10 +63,16 @@ class SettingsActions(
     val onApiBaseUrl: (String) -> Unit,
     val onAuthToken: (String) -> Unit,
     val onReplayIntro: () -> Unit,
+    val onSignOut: () -> Unit,
 )
 
 @Composable
-fun SettingsScreen(settings: Settings, actions: SettingsActions, modifier: Modifier = Modifier) {
+fun SettingsScreen(
+    settings: Settings,
+    actions: SettingsActions,
+    modifier: Modifier = Modifier,
+    signedIn: Boolean = false,
+) {
     val c = Monet.colors
     val t = Monet.type
     Column(
@@ -113,6 +121,15 @@ fun SettingsScreen(settings: Settings, actions: SettingsActions, modifier: Modif
             )
         }
 
+        if (signedIn) {
+            HorizontalDivider(color = c.hairline)
+            Group("ACCOUNT") {
+                TextButton(onClick = actions.onSignOut) {
+                    Text("Sign out", style = t.label, color = c.seal)
+                }
+            }
+        }
+
         HorizontalDivider(color = c.hairline)
         Group("DEVELOPER") {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween,
@@ -137,6 +154,11 @@ fun SettingsScreen(settings: Settings, actions: SettingsActions, modifier: Modif
             TextButton(onClick = actions.onReplayIntro) {
                 Text("Replay introduction", style = t.label, color = c.seal)
             }
+        }
+
+        HorizontalDivider(color = c.hairline)
+        Group("ABOUT") {
+            Text("Monet " + formatVersion(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE), style = t.body, color = c.inkMuted)
         }
     }
 }
@@ -220,7 +242,7 @@ private fun CommitField(label: String, value: String, onCommit: (String) -> Unit
     )
 }
 
-private val previewActions = SettingsActions({}, {}, {}, {}, {}, {}, {}, {}, {})
+private val previewActions = SettingsActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {})
 
 @Preview(name = "Settings light", showBackground = true, widthDp = 360, heightDp = 780)
 @Composable

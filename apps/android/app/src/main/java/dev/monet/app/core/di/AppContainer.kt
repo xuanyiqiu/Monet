@@ -1,6 +1,10 @@
 package dev.monet.app.core.di
 
 import android.content.Context
+import dev.monet.app.BuildConfig
+import dev.monet.app.core.auth.AuthRepository
+import dev.monet.app.core.auth.SessionStore
+import dev.monet.app.core.auth.SupabaseAuthApi
 import dev.monet.app.core.network.FakeMonetApi
 import dev.monet.app.core.network.MonetApi
 import dev.monet.app.core.network.RemoteMonetApi
@@ -12,18 +16,25 @@ import kotlinx.coroutines.runBlocking
 class AppContainer(context: Context) {
     val settingsRepository = SettingsRepository(context)
 
+    val auth = AuthRepository(
+        api = SupabaseAuthApi(BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_PUBLISHABLE_KEY),
+        store = SessionStore(context),
+    )
+
     /**
      * Delegates to fake or remote per call, so flipping the dev switch in Settings takes effect
      * immediately without recreating screens.
      */
     val api: MonetApi = SwitchingMonetApi(
         settingsRepository = settingsRepository,
+        auth = auth,
         fake = FakeMonetApi(),
     )
 }
 
 private class SwitchingMonetApi(
     private val settingsRepository: SettingsRepository,
+    private val auth: AuthRepository,
     private val fake: MonetApi,
 ) : MonetApi {
     private var remote: Pair<String, RemoteMonetApi>? = null
@@ -33,8 +44,15 @@ private class SwitchingMonetApi(
         if (s.useFakeApi) return fake
         val cached = remote
         if (cached != null && cached.first == s.apiBaseUrl) return cached.second
-        // The token is read per request so editing it in Settings applies immediately.
-        val api = RemoteMonetApi(s.apiBaseUrl, token = { runBlocking { settingsRepository.settings.first().authToken } })
+        // Both lambdas run on OkHttp threads, so blocking here is fine. The signed-in session wins;
+        // the Settings token is the fallback for a local dev API that accepts `dev:` tokens.
+        val api = RemoteMonetApi(
+            baseUrl = s.apiBaseUrl,
+            token = {
+                runBlocking { auth.accessToken() ?: settingsRepository.settings.first().authToken }
+            },
+            renewToken = { runBlocking { auth.accessToken(force = true) } },
+        )
         remote = s.apiBaseUrl to api
         return api
     }
