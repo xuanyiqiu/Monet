@@ -60,7 +60,7 @@ private fun MonetColors.toMaterial(): ColorScheme {
 @Composable
 fun MonetTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    fonts: MonetFonts = MonetFonts.System,
+    fonts: MonetFonts = MonetFonts.Google,
     content: @Composable () -> Unit,
 ) {
     val colors = if (darkTheme) DarkMonetColors else LightMonetColors

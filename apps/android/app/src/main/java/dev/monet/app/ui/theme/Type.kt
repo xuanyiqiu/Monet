@@ -2,9 +2,14 @@ package dev.monet.app.ui.theme
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.DeviceFontFamilyName
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.googlefonts.Font as GFont
+import androidx.compose.ui.text.googlefonts.GoogleFont
+import dev.monet.app.R
 import androidx.compose.ui.unit.sp
 
 /** Type roles from docs/DESIGN_SYSTEM.md. */
@@ -23,6 +28,31 @@ data class MonetTypography(
 data class MonetFonts(val sans: FontFamily, val serif: FontFamily, val hanzi: FontFamily) {
     companion object {
         val System = MonetFonts(FontFamily.SansSerif, FontFamily.Serif, FontFamily.Serif)
+
+        // Certificates in res/values/font_certs.xml come from the official Android sample
+        // (android/compose-samples, Jetchat). Do not edit them.
+        private val provider = GoogleFont.Provider(
+            providerAuthority = "com.google.android.gms.fonts",
+            providerPackage = "com.google.android.gms",
+            certificates = R.array.com_google_android_gms_fonts_certs,
+        )
+
+        /** Downloadable face per weight; the device font in the same list renders until it arrives
+         *  (and stays if Play services are missing), so the app looks as before without them. */
+        private fun family(name: String, device: String, vararg weights: FontWeight): FontFamily {
+            val gf = GoogleFont(name)
+            return FontFamily(
+                weights.flatMap { w ->
+                    listOf(GFont(gf, provider, w), Font(DeviceFontFamilyName(device), w))
+                },
+            )
+        }
+
+        val Google = MonetFonts(
+            sans = family("IBM Plex Sans", "sans-serif", FontWeight.Normal, FontWeight.Medium, FontWeight.SemiBold),
+            serif = family("Source Serif 4", "serif", FontWeight.Normal, FontWeight.SemiBold),
+            hanzi = family("Noto Serif SC", "serif", FontWeight.Medium),
+        )
     }
 }
 
