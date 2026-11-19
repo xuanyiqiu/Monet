@@ -69,8 +69,8 @@ def lint(path: Path) -> tuple[list[str], list[str]]:
         errors.append(f"unfilled placeholder: {m.group(0).strip()!r}")
     if "path/to/" in body:
         errors.append("template path `path/to/...` left in the spec")
-    for pat in VAGUE:
-        for m in re.finditer(pat, body, re.I):
+    for pat in VAGUE:  # code spans are exempt: file and command names may contain these words
+        for m in re.finditer(pat, prose, re.I):
             line = body.count("\n", 0, m.start()) + 1
             errors.append(f"vague wording {m.group(0)!r} on line {line}: replace with a concrete rule")
 
