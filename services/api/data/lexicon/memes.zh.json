@@ -1639,5 +1639,173 @@
   "literal": "it's the absolute end",
   "register": "enthusiastic, sometimes ironic",
   "ambiguous": true
+ },
+ {
+  "term": "孔乙己文学",
+  "lang": "zh",
+  "kind": "meme",
+  "pinyin": "kǒng yǐ jǐ wén xué",
+  "literal": "Kong Yiji literature",
+  "meaning": "Self-mocking posts by graduates who feel stuck in their degree pride and compare themselves to Kong Yiji.",
+  "origin": "Named after Kong Yiji, Lu Xun's character who cannot take off his scholar's long gown; used in self-mocking posts by graduates who feel stuck in their degree pride in 2023.",
+  "register": "self-mocking, social commentary",
+  "equivalent": {
+   "en": "Kong Yiji literature",
+   "es": "literatura Kong Yiji"
+  }
+ },
+ {
+  "term": "脆皮大学生",
+  "lang": "zh",
+  "kind": "meme",
+  "pinyin": "cuì pí dà xué shēng",
+  "literal": "brittle-skin university student",
+  "meaning": "Young people who get hurt or ill from ordinary things like a sneeze or a stretch.",
+  "origin": "Describes young people who get hurt or ill from ordinary things such as a sneeze or a stretch; 2023.",
+  "register": "self-deprecating, humorous",
+  "equivalent": {
+   "en": "brittle-skin student",
+   "es": "estudiante de piel de cristal"
+  }
+ },
+ {
+  "term": "偷感",
+  "lang": "zh",
+  "kind": "meme",
+  "pinyin": "tōu gǎn",
+  "literal": "sneaky feel",
+  "meaning": "Acting furtive and shy, as if hiding (as in 偷感很重).",
+  "origin": "Origin unclear; spread on Chinese social media around 2024.",
+  "register": "self-deprecating, casual",
+  "equivalent": {
+   "en": "sneaky vibe",
+   "es": "aire furtivo"
+  }
+ },
+ {
+  "term": "淡人",
+  "lang": "zh",
+  "kind": "meme",
+  "pinyin": "dàn rén",
+  "literal": "bland person",
+  "meaning": "A low-desire, calm, unbothered person who does not compete or seek attention.",
+  "origin": "Describes a low-desire, calm, unbothered person who does not compete or seek attention; 2023.",
+  "register": "neutral, mildly approving",
+  "equivalent": {
+   "en": "low-desire person",
+   "es": "persona sin deseos"
+  }
+ },
+ {
+  "term": "多巴胺穿搭",
+  "lang": "zh",
+  "kind": "meme",
+  "pinyin": "duō bā àn chuān dā",
+  "literal": "dopamine outfit",
+  "meaning": "Bright, colourful outfits worn to lift your mood.",
+  "origin": "Bright, colourful outfits worn to lift your mood; 2023.",
+  "register": "playful, trendy",
+  "equivalent": {
+   "en": "dopamine dressing",
+   "es": "vestir de dopamina"
+  }
+ },
+ {
+  "term": "嘴替",
+  "lang": "zh",
+  "kind": "meme",
+  "pinyin": "zuǐ tì",
+  "literal": "mouth substitute",
+  "meaning": "A person or comment that says what you wanted to say.",
+  "origin": "A person or comment that says what you wanted to say; 2020.",
+  "register": "approving, casual",
+  "equivalent": {
+   "en": "mouthpiece",
+   "es": "portavoz"
+  }
+ },
+ {
+  "term": "反内卷",
+  "lang": "zh",
+  "kind": "meme",
+  "pinyin": "fǎn nèi juǎn",
+  "literal": "anti-involution",
+  "meaning": "Resisting involution, the pointless rat race.",
+  "origin": "Resisting involution, the pointless rat race known as 内卷; 2021.",
+  "register": "social commentary, defiant",
+  "equivalent": {
+   "en": "anti-rat-race",
+   "es": "anti-involución"
+  }
+ },
+ {
+  "term": "科目三",
+  "lang": "zh",
+  "kind": "meme",
+  "pinyin": "kē mù sān",
+  "literal": "driving test subject three",
+  "meaning": "A viral dance associated with the name of driving test subject three, since 2023.",
+  "origin": "Literally 'driving test subject three'; since 2023 also a viral dance associated with that name.",
+  "register": "playful, viral",
+  "equivalent": {
+   "en": "Subject Three dance",
+   "es": "el baile del Subject Three"
+  }
+ },
+ {
+  "term": "泰酷辣",
+  "lang": "zh",
+  "kind": "meme",
+  "pinyin": "tài kù là",
+  "literal": "Thai cool spicy",
+  "meaning": "A cutesy, mock-foreign way of saying 太酷啦, 'so cool!'.",
+  "origin": "Origin unclear; spread on Chinese social media around 2023.",
+  "register": "playful, cutesy",
+  "equivalent": {
+   "en": "so cool!",
+   "es": "¡qué guay!"
+  }
+ },
+ {
+  "term": "格局打开",
+  "lang": "zh",
+  "kind": "meme",
+  "pinyin": "gé jú dǎ kāi",
+  "literal": "open up the framework",
+  "meaning": "An exhortation to think bigger and stop sweating small things, often said ironically to console someone.",
+  "origin": "Origin unclear; spread on Chinese social media around 2022.",
+  "register": "consoling, often ironic",
+  "equivalent": {
+   "en": "think bigger",
+   "es": "amplía horizontes"
+  }
+ },
+ {
+  "term": "命运的齿轮开始转动",
+  "lang": "zh",
+  "kind": "meme",
+  "pinyin": "mìng yùn de chǐ lún kāi shǐ zhuǎn dòng",
+  "literal": "the gears of fate begin to turn",
+  "meaning": "An ironic, over-dramatic line said when something small starts a chain of events.",
+  "origin": "Origin unclear; spread on Chinese social media around 2022.",
+  "register": "ironic, over-dramatic",
+  "equivalent": {
+   "en": "the gears of fate begin to turn",
+   "es": "los engranajes del destino empiezan a girar"
+  }
+ },
+ {
+  "term": "city不city",
+  "lang": "zh",
+  "kind": "meme",
+  "pinyin": "city bù city",
+  "literal": "city not city",
+  "meaning": "Is it urban, trendy and stylish or not; mixes English and Chinese.",
+  "origin": "Origin unclear; spread on Chinese social media around 2023.",
+  "register": "playful, trendy",
+  "equivalent": {
+   "en": "city or not city?",
+   "es": "¿ciudad o no ciudad?"
+  }
  }
 ]
