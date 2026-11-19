@@ -38,6 +38,7 @@ Everything else, especially `contracts/openapi.yaml`, any `.env` file, migration
 Run both commands with the working directory set to `services/api` (use the tool's `workdir`; do not chain with `cd` or `&&`):
 - [ ] `../../.tools/bin/uv.exe run pytest -q` green (all existing tests still pass)
 - [ ] `../../.tools/bin/uv.exe run ruff check .` green
+- [ ] `../../.tools/bin/uv.exe run ruff format --check .` green (CI runs it; if it fails, run `../../.tools/bin/uv.exe run ruff format .` on your files and commit)
 - [ ] Commit on the current branch: `feat(api): <summary>`
 
 ## Worker report

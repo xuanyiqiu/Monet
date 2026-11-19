@@ -47,7 +47,9 @@ def shared_nlp(settings: Settings) -> tuple[Lexicon, Tokenizer]:
 
 def build_blob_store(settings: Settings) -> BlobStore:
     if settings.supabase_url and settings.supabase_service_key:
-        return SupabaseBlobStore(settings.supabase_url, settings.supabase_service_key, settings.supabase_bucket)
+        return SupabaseBlobStore(
+            settings.supabase_url, settings.supabase_service_key, settings.supabase_bucket
+        )
     return LocalBlobStore(settings.blob_dir)
 
 

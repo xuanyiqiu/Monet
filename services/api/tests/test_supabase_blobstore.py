@@ -182,24 +182,18 @@ def test_lifespan_with_local_blob_store(settings, fake_llm):
 
 
 async def test_get_missing_object_400_no_such_key_raises_file_not_found():
-    store = make_fixed_store(
-        400, {"statusCode": "404", "error": "not_found", "code": "NoSuchKey"}
-    )
+    store = make_fixed_store(400, {"statusCode": "404", "error": "not_found", "code": "NoSuchKey"})
     with pytest.raises(FileNotFoundError):
         await store.get("a.pdf")
 
 
 async def test_delete_missing_object_400_no_such_key_does_not_raise():
-    store = make_fixed_store(
-        400, {"statusCode": "404", "error": "not_found", "code": "NoSuchKey"}
-    )
+    store = make_fixed_store(400, {"statusCode": "404", "error": "not_found", "code": "NoSuchKey"})
     await store.delete("a.pdf")
 
 
 async def test_missing_bucket_400_no_such_bucket_raises_runtime_error():
-    store = make_fixed_store(
-        400, {"statusCode": "404", "error": "Bucket not found", "code": "NoSuchBucket"}
-    )
+    store = make_fixed_store(400, {"statusCode": "404", "error": "Bucket not found", "code": "NoSuchBucket"})
     with pytest.raises(RuntimeError) as exc:
         await store.get("a.pdf")
     assert "400" in str(exc.value)
