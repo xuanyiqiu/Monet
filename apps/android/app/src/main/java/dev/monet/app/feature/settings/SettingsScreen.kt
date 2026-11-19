@@ -42,10 +42,12 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import dev.monet.app.BuildConfig
 import dev.monet.app.core.network.Lang
 import dev.monet.app.core.settings.PinyinStyle
 import dev.monet.app.core.settings.Settings
 import dev.monet.app.core.settings.ThemeMode
+import dev.monet.app.core.settings.formatVersion
 import dev.monet.app.ui.theme.Monet
 import dev.monet.app.ui.theme.MonetTheme
 import dev.monet.app.ui.theme.Radius
@@ -152,6 +154,11 @@ fun SettingsScreen(
             TextButton(onClick = actions.onReplayIntro) {
                 Text("Replay introduction", style = t.label, color = c.seal)
             }
+        }
+
+        HorizontalDivider(color = c.hairline)
+        Group("ABOUT") {
+            Text("Monet " + formatVersion(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE), style = t.body, color = c.inkMuted)
         }
     }
 }

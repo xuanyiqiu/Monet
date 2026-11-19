@@ -63,6 +63,23 @@ android {
             isMinifyEnabled = false
         }
     }
+    splits {
+        abi {
+            isEnable = gradle.startParameter.taskNames.any { it.contains("Release", ignoreCase = true) }
+            reset()
+            include("arm64-v8a", "armeabi-v7a", "x86_64")
+            isUniversalApk = true
+        }
+    }
+    applicationVariants.all {
+        val variant = this
+        outputs.all outputLoop@ {
+            if (variant.buildType.name != "release") return@outputLoop
+            val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+            val abi = output.filters.find { it.filterType == "ABI" }?.identifier ?: "universal"
+            output.outputFileName = "monet-$monetVersionName-$abi.apk"
+        }
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
