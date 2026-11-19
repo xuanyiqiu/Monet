@@ -7,6 +7,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,7 +25,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.VolumeUp
+import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.Flag
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.SlowMotionVideo
 import androidx.compose.material3.HorizontalDivider
@@ -73,6 +77,11 @@ class DetailActions(
     val onSpeak: (slow: Boolean) -> Unit,
     val onCopy: () -> Unit,
     val onShare: () -> Unit,
+    val onSpeakToken: (String) -> Unit = {},
+    val onSave: () -> Unit = {},
+    val onReport: () -> Unit = {},
+    val saved: Boolean = false,
+    val report: ReportState = ReportState.Idle,
 )
 
 @Composable
@@ -106,10 +115,10 @@ private fun ReadyBlock(state: DetailUiState.Ready, actions: DetailActions) {
             Text(a.translation, style = Monet.type.reading, color = Monet.colors.ink)
             a.note?.let { Text(it, style = Monet.type.body, color = Monet.colors.inkMuted) }
         }
-        ActionRow(actions)
+        ActionRow(actions, canReport = !state.translationMissing)
     }
     HorizontalDivider(color = Monet.colors.hairline)
-    Section("BREAKDOWN") { Breakdown(a, state.pinyinStyle) }
+    Section("BREAKDOWN") { Breakdown(a, state.pinyinStyle, actions.onSpeakToken) }
     if (a.expressions.isNotEmpty()) {
         HorizontalDivider(color = Monet.colors.hairline)
         Section("WHY IT SAYS THAT") {
@@ -130,19 +139,51 @@ private fun Section(title: String, content: @Composable () -> Unit) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ActionRow(actions: DetailActions) {
+private fun ActionRow(actions: DetailActions, canReport: Boolean) {
     val c = Monet.colors
     FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.x1)) {
-        ActionButton("Listen", Icons.AutoMirrored.Outlined.VolumeUp, c.seal) { actions.onSpeak(false) }
+        ActionButton("Listen", Icons.AutoMirrored.Outlined.VolumeUp, c.seal, description = "Listen. Tap again while playing for slow") { actions.onSpeak(false) }
         ActionButton("Slow", Icons.Outlined.SlowMotionVideo, c.ink) { actions.onSpeak(true) }
-        ActionButton("Copy", Icons.Outlined.ContentCopy, c.ink, actions.onCopy)
-        ActionButton("Share", Icons.Outlined.Share, c.ink, actions.onShare)
+        ActionButton("Copy", Icons.Outlined.ContentCopy, c.ink, onClick = actions.onCopy)
+        ActionButton("Share", Icons.Outlined.Share, c.ink, onClick = actions.onShare)
+        ActionButton(
+            if (actions.saved) "Saved" else "Save",
+            if (actions.saved) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
+            if (actions.saved) c.seal else c.ink,
+            enabled = !actions.saved,
+            description = if (actions.saved) "Saved to notebook" else "Save to notebook",
+            onClick = actions.onSave,
+        )
+        if (canReport) {
+            val sent = actions.report == ReportState.Sent
+            val sending = actions.report == ReportState.Sending
+            ActionButton(
+                if (sent) "Reported" else if (sending) "Sending…" else "Report",
+                Icons.Outlined.Flag,
+                c.ink,
+                enabled = !sent && !sending,
+                description = if (sent) "Reported as a bad translation" else "Report a bad translation",
+                onClick = actions.onReport,
+            )
+        }
+    }
+    when (val r = actions.report) {
+        ReportState.Sent -> Text("Thanks, we will take a look.", style = Monet.type.label, color = c.inkMuted)
+        is ReportState.Failed -> Text(r.message, style = Monet.type.body, color = c.ink)
+        else -> Unit
     }
 }
 
 @Composable
-private fun ActionButton(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, tint: Color, onClick: () -> Unit) {
-    TextButton(onClick = onClick) {
+private fun ActionButton(
+    label: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    tint: Color,
+    enabled: Boolean = true,
+    description: String = label,
+    onClick: () -> Unit,
+) {
+    TextButton(onClick = onClick, enabled = enabled, modifier = Modifier.semantics { contentDescription = description }) {
         Icon(icon, contentDescription = null, tint = tint)
         Text(label, style = Monet.type.label, color = tint, modifier = Modifier.padding(start = Spacing.x1))
     }
@@ -152,7 +193,7 @@ private fun ActionButton(label: String, icon: androidx.compose.ui.graphics.vecto
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun Breakdown(a: Annotation, style: PinyinStyle) {
+private fun Breakdown(a: Annotation, style: PinyinStyle, onSpeakToken: (String) -> Unit) {
     val underline = remember(a) { underlineByToken(a) }
     FlowRow(
         horizontalArrangement = Arrangement.spacedBy(Spacing.x1),
@@ -162,7 +203,7 @@ private fun Breakdown(a: Annotation, style: PinyinStyle) {
             if (token.kind == TokenKind.SPACE) {
                 Box(Modifier.width(Spacing.x2))
             } else {
-                TokenCell(token, a.sourceLang, style, underline[i])
+                TokenCell(token, a.sourceLang, style, underline[i], onSpeakToken)
             }
         }
     }
@@ -175,14 +216,16 @@ private fun underlineByToken(a: Annotation): Map<Int, UnderlineStyle> = buildMap
 }
 
 @Composable
-private fun TokenCell(token: Token, lang: Lang, style: PinyinStyle, underline: UnderlineStyle?) {
+private fun TokenCell(token: Token, lang: Lang, style: PinyinStyle, underline: UnderlineStyle?, onSpeak: (String) -> Unit) {
     val c = Monet.colors
     val t = Monet.type
     val ruby = rubyText(token, lang, style, c)
     val description = listOfNotNull(token.text, token.pinyin ?: token.ipa, token.gloss).joinToString(", ")
+    val speakable = token.kind != TokenKind.PUNCT
     Column(
         Modifier
-            .semantics(mergeDescendants = true) { contentDescription = description }
+            .semantics(mergeDescendants = true) { contentDescription = if (speakable) "$description. Tap to hear" else description }
+            .clickable(enabled = speakable) { onSpeak(token.text) }
             .padding(horizontal = Spacing.x1),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {

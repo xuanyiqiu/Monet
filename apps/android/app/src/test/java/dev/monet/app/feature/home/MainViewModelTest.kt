@@ -38,4 +38,36 @@ class MainViewModelTest {
         vm.dismiss()
         assertNull(vm.sheetText.value)
     }
+
+    @Test
+    fun `notebook and review sit under home and notebook`() {
+        assertEquals(Screen.Home, Screen.Notebook.parent())
+        assertEquals(Screen.Notebook, Screen.Review.parent())
+        val vm = MainViewModel()
+        vm.open(Screen.Notebook)
+        vm.open(Screen.Review)
+        assertTrue(vm.back())
+        assertEquals(Screen.Notebook, vm.screen.value)
+        assertTrue(vm.back())
+        assertEquals(Screen.Home, vm.screen.value)
+    }
+
+    @Test
+    fun `a saved annotation opens the sheet with its stored data until dismissed or replaced`() {
+        val a = kotlinx.coroutines.runBlocking {
+            dev.monet.app.core.network.FakeMonetApi(latencyMs = 0).annotate(
+                dev.monet.app.core.network.AnnotateRequest(text = "你好", targetLang = dev.monet.app.core.network.Lang.EN),
+            )
+        }
+        val vm = MainViewModel()
+        vm.explainSaved(a)
+        assertEquals("你好", vm.sheetText.value)
+        assertEquals(a, vm.sheetAnnotation.value)
+        vm.explain("再见")
+        assertNull(vm.sheetAnnotation.value)
+        vm.explainSaved(a)
+        vm.dismiss()
+        assertNull(vm.sheetAnnotation.value)
+        assertNull(vm.sheetText.value)
+    }
 }

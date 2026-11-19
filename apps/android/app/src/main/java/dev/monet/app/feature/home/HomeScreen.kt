@@ -45,6 +45,7 @@ fun HomeScreen(
     lensRunning: Boolean,
     onToggleLens: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenNotebook: () -> Unit = {},
 ) {
     val c = Monet.colors
     val t = Monet.type
@@ -117,6 +118,17 @@ fun HomeScreen(
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text("Open library", style = t.label, color = c.seal)
+        }
+        HorizontalDivider(color = c.hairline, modifier = Modifier.padding(vertical = Spacing.x2))
+        Text("NOTEBOOK", style = t.label, color = c.inkMuted)
+        Text("Lines you saved, with a short daily review.", style = t.body, color = c.inkMuted)
+        OutlinedButton(
+            onClick = onOpenNotebook,
+            shape = RoundedCornerShape(Radius.sm),
+            border = BorderStroke(1.dp, c.seal),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text("Open notebook", style = t.label, color = c.seal)
         }
         HorizontalDivider(color = c.hairline, modifier = Modifier.padding(vertical = Spacing.x2))
         Text("LENS", style = t.label, color = c.inkMuted)

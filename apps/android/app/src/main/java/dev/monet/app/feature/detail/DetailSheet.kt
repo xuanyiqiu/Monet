@@ -22,6 +22,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import dev.monet.app.MonetApp
+import dev.monet.app.core.network.Annotation
 import dev.monet.app.core.network.Lang
 import dev.monet.app.ui.theme.Monet
 import dev.monet.app.ui.theme.Radius
@@ -29,22 +30,25 @@ import dev.monet.app.ui.theme.Radius
 /** Bottom sheet that explains [text]. State is keyed by text so a new selection restarts loading. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DetailSheet(text: String, onDismiss: () -> Unit) {
+fun DetailSheet(text: String, onDismiss: () -> Unit, provided: Annotation? = null) {
     val context = LocalContext.current
     val container = (context.applicationContext as MonetApp).container
     val viewModel: DetailViewModel = viewModel(
         key = "detail:$text",
         factory = viewModelFactory {
-            initializer { DetailViewModel(container.api, container.settingsRepository, text) }
+            initializer { DetailViewModel(container.api, container.settingsRepository, text, container.notebook, provided) }
         },
     )
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val extras by viewModel.extras.collectAsStateWithLifecycle()
 
     val speaker = remember { Speaker(context) }
     DisposableEffect(speaker) { onDispose { speaker.shutdown() } }
     LaunchedEffect(speaker) { container.settingsRepository.settings.collect { speaker.speed = it.ttsSpeed } }
 
-    val actions = remember(text, state) { buildDetailActions(context, speaker, text, state, onRetry = viewModel::load) }
+    val actions = remember(text, state, extras) {
+        buildDetailActions(context, speaker, text, state, onRetry = viewModel::load, extras = extras, onSave = viewModel::save, onReport = viewModel::report)
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -68,14 +72,31 @@ internal fun buildDetailActions(
     state: DetailUiState,
     onRetry: () -> Unit,
     afterShare: () -> Unit = {},
+    extras: DetailExtras = DetailExtras(),
+    onSave: () -> Unit = {},
+    onReport: () -> Unit = {},
 ): DetailActions {
     val ready = state as? DetailUiState.Ready
+    val lang = ready?.annotation?.sourceLang ?: guessLang(text)
+    fun say(what: String, slow: Boolean) {
+        if (!speaker.speak(what, lang, slow)) {
+            Toast.makeText(context, "No voice available for this language", Toast.LENGTH_SHORT).show()
+        }
+    }
     return DetailActions(
         onRetry = onRetry,
         onSpeak = { slow ->
-            val ok = speaker.speak(text, ready?.annotation?.sourceLang ?: guessLang(text), slow)
-            if (!ok) Toast.makeText(context, "No voice available for this language", Toast.LENGTH_SHORT).show()
+            if (slow) speaker.taps.reset()
+            say(text, slow || speaker.taps.tap(text.length))
         },
+        onSpeakToken = { token ->
+            speaker.taps.reset()
+            say(token, false)
+        },
+        onSave = onSave,
+        onReport = onReport,
+        saved = extras.saved,
+        report = extras.report,
         onCopy = { copy(context, shareText(text, ready)) },
         onShare = {
             share(context, shareText(text, ready))

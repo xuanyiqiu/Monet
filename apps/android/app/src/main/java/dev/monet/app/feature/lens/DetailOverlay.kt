@@ -67,7 +67,7 @@ internal class DetailOverlay(
     fun open(text: String) {
         val wasOpen = isOpen
         dismiss(notify = false)
-        val detail = DetailController(host.scope, host.container.api, host.container.settingsRepository, text)
+        val detail = DetailController(host.scope, host.container.api, host.container.settingsRepository, text, host.container.notebook)
         val voice = Speaker(host.service)
         controller = detail
         speaker = voice
@@ -78,8 +78,13 @@ internal class DetailOverlay(
         val topInset = (host.statusBarPx() / density).dp
         val compose = host.composeView {
             val state by detail.state.collectAsState()
-            val actions = remember(state) {
-                buildDetailActions(host.service, voice, text, state, onRetry = detail::load, afterShare = { close() })
+            val extras by detail.extras.collectAsState()
+            val actions = remember(state, extras) {
+                buildDetailActions(
+                    host.service, voice, text, state,
+                    onRetry = detail::load, afterShare = { close() },
+                    extras = extras, onSave = detail::save, onReport = detail::report,
+                )
             }
             DetailOverlaySheet(text, state, actions, topInset, bottomInset, onDismiss = { close() })
         }
