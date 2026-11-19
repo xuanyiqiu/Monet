@@ -64,6 +64,7 @@ class LibraryActions(
     val onAdd: () -> Unit,
     val onOpen: (Document) -> Unit,
     val onDelete: (Document) -> Unit,
+    val onRetry: (Document) -> Unit = {},
 )
 
 private val DOCUMENT_MIME_TYPES = arrayOf(
@@ -101,6 +102,7 @@ fun LibraryRoute(onBack: () -> Unit, onOpen: (String) -> Unit) {
             onAdd = { picker.launch(DOCUMENT_MIME_TYPES) },
             onOpen = { onOpen(it.id) },
             onDelete = { viewModel.delete(it.id) },
+            onRetry = viewModel::retry,
         ),
     )
 }
@@ -210,6 +212,16 @@ private fun DocumentRow(doc: Document, actions: LibraryActions) {
                 Icon(Icons.Outlined.MoreVert, contentDescription = "More options for ${doc.title}", tint = c.inkMuted)
             }
             DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }, containerColor = c.surface) {
+                if (canRetry(doc)) {
+                    DropdownMenuItem(
+                        text = { Text("Retry", style = t.body, color = c.ink) },
+                        modifier = Modifier.semantics { contentDescription = "Retry ${doc.title}" },
+                        onClick = {
+                            menuOpen = false
+                            actions.onRetry(doc)
+                        },
+                    )
+                }
                 DropdownMenuItem(
                     text = { Text("Delete", style = t.body, color = c.danger) },
                     onClick = {

@@ -37,7 +37,10 @@ import dev.monet.app.feature.detail.DetailSheet
 import dev.monet.app.feature.home.HomeScreen
 import dev.monet.app.feature.home.MainViewModel
 import dev.monet.app.feature.home.Screen
-import dev.monet.app.feature.home.incomingText
+import dev.monet.app.feature.home.IncomingShare
+import dev.monet.app.feature.home.incomingShare
+import dev.monet.app.feature.home.streamUri
+import dev.monet.app.feature.library.uploadFromUri
 import dev.monet.app.feature.lens.LensState
 import dev.monet.app.feature.lens.canDrawOverlays
 import dev.monet.app.feature.lens.needsNotificationPermission
@@ -108,7 +111,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         val container = container
         // Only the first launch carries the intent; after rotation the ViewModel already has the text.
-        if (savedInstanceState == null) viewModel.explain(intent.incomingText())
+        if (savedInstanceState == null) handleIncoming(intent)
         setContent {
             val settingsViewModel: SettingsViewModel = viewModel(
                 factory = viewModelFactory { initializer { SettingsViewModel(container.settingsRepository) } },
@@ -252,6 +255,23 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        viewModel.explain(intent.incomingText())
+        handleIncoming(intent)
+    }
+
+    private fun handleIncoming(intent: Intent) {
+        when (val share = intent.incomingShare()) {
+            is IncomingShare.Text -> viewModel.explain(share.text)
+            is IncomingShare.File -> {
+                val uri = intent.streamUri() ?: return
+                Toast.makeText(this, "Uploading document…", Toast.LENGTH_SHORT).show()
+                lifecycleScope.launch {
+                    val error = uploadFromUri(container.api, container.settingsRepository, contentResolver, uri)
+                    if (error == null) viewModel.open(Screen.Library) else Toast.makeText(this@MainActivity, error, Toast.LENGTH_LONG).show()
+                }
+            }
+            IncomingShare.Unsupported ->
+                Toast.makeText(this, "Choose a PDF, DOCX or TXT file.", Toast.LENGTH_LONG).show()
+            IncomingShare.Nothing -> Unit
+        }
     }
 }

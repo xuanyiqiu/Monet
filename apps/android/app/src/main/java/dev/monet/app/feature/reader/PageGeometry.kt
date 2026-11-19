@@ -56,3 +56,7 @@ fun hitLine(page: DocumentPage, x: Float, y: Float, widthPx: Float, heightPx: Fl
 /** Page numbers to keep rendered around the visible one, so scrolling feels instant. */
 fun pagesToPrefetch(current: Int, pageCount: Int, radius: Int = 1): List<Int> =
     ((current - radius)..(current + radius)).filter { it in 0 until pageCount }
+
+/** Text to explain when the user long-presses at the point, or null when no line is near it. */
+fun longPressText(page: DocumentPage, x: Float, y: Float, widthPx: Float, heightPx: Float, slopPx: Float = 12f): String? =
+    hitLine(page, x, y, widthPx, heightPx, slopPx)?.text?.takeIf { it.isNotBlank() }
