@@ -48,6 +48,8 @@ import dev.monet.app.feature.lens.overlaySettingsIntent
 import dev.monet.app.feature.lens.startLens
 import dev.monet.app.feature.lens.stopLens
 import dev.monet.app.feature.library.LibraryRoute
+import dev.monet.app.feature.notebook.NotebookRoute
+import dev.monet.app.feature.notebook.ReviewRoute
 import dev.monet.app.feature.onboarding.OnboardingRoute
 import dev.monet.app.feature.reader.ReaderRoute
 import dev.monet.app.feature.settings.SettingsActions
@@ -131,6 +133,7 @@ class MainActivity : ComponentActivity() {
             }
             MonetTheme(darkTheme = dark) {
                 val sheetText by viewModel.sheetText.collectAsStateWithLifecycle()
+                val sheetAnnotation by viewModel.sheetAnnotation.collectAsStateWithLifecycle()
                 val showCaptureNotice by viewModel.captureNotice.collectAsStateWithLifecycle()
                 when (val s = stored) {
                     null -> Box(Modifier.fillMaxSize().background(Monet.colors.paper))
@@ -165,7 +168,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
-                sheetText?.let { DetailSheet(text = it, onDismiss = viewModel::dismiss) }
+                sheetText?.let { DetailSheet(text = it, onDismiss = viewModel::dismiss, provided = sheetAnnotation) }
                 if (showCaptureNotice) {
                     AlertDialog(
                         onDismissRequest = viewModel::dismissCaptureNotice,
@@ -208,6 +211,7 @@ class MainActivity : ComponentActivity() {
                     onExplain = viewModel::explain,
                     onOpenSettings = { viewModel.open(Screen.Settings) },
                     onOpenLibrary = { viewModel.open(Screen.Library) },
+                    onOpenNotebook = { viewModel.open(Screen.Notebook) },
                     lensRunning = lens.running,
                     onToggleLens = ::toggleLens,
                 )
@@ -240,6 +244,12 @@ class MainActivity : ComponentActivity() {
                     },
                 ),
             )
+            Screen.Notebook -> NotebookRoute(
+                onBack = { viewModel.back() },
+                onOpen = viewModel::explainSaved,
+                onReview = { viewModel.open(Screen.Review) },
+            )
+            Screen.Review -> ReviewRoute(onBack = { viewModel.back() })
             Screen.Library -> LibraryRoute(
                 onBack = { viewModel.back() },
                 onOpen = { viewModel.open(Screen.Reader(it)) },
