@@ -6,6 +6,7 @@
   "share": "disabled",
   "permission": {
     "edit": "allow",
+    "read": { "*": "allow", "*local.properties": "deny", "*.jks": "deny", "*.keystore": "deny", "*.env": "deny", "*.env.*": "deny" },
     "webfetch": "deny",
     "external_directory": "deny",
     "bash": {
@@ -47,6 +48,10 @@
       "*pg_restore*": "deny",
       "*postgres*": "deny",
       "*.env*": "deny",
+      "*local.properties*": "deny",
+      "*.jks*": "deny",
+      "*.keystore*": "deny",
+      "*keytool*": "deny",
       "*Get-Service*": "deny",
       "*sc.exe*": "deny"
     }
