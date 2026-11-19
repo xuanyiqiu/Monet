@@ -48,7 +48,7 @@ Legend: `[ ]` todo · `[~] (branch)` in progress · `[x]` done. Work top-down wi
 - [ ] F-18 Reader round 2: remembers the reading position, long-press opens the Detail sheet, upload from the share sheet, retry for failed pages/documents. AC: emulator check.
 - [x] F-19a APK versioning: `versionName` from the latest `v*` git tag (`git describe`), `versionCode` = commit count, both overridable with `-Pmonet.versionName/-Pmonet.versionCode`, `printVersion` task. AC: spec checks in `docs/tasks/F-19a.md`; debug build green.
 - [x] F-19b Per-ABI release APKs named `monet-<versionName>-<abi>.apk` (plus universal) and Settings shows "Monet x (code)". AC: spec checks in `docs/tasks/F-19b.md`.
-- [~] (feat/f19d-r8-shrink) F-19d R8 + resource shrinking for release (keep rules for kotlinx.serialization, Retrofit, ML Kit). AC: release APK installs and runs the Lens on the emulator; size reported per ABI.
+- [x] F-19d R8 + resource shrinking for release (keep rules for kotlinx.serialization, Retrofit, ML Kit). AC: release APK installs and runs the Lens on the emulator; size reported per ABI.
 - [x] F-19c Release signing: signing config from a local keystore via `local.properties` (never committed), `scripts/release_android.ps1` (clean-tree guard, build, `apksigner verify`, `SHA256SUMS.txt`). Done; publishing is F-19e.
 - [ ] F-19e Publish: tag `v0.1.0`, GitHub Release with the signed APKs and checksums, upgrade-install check over the previous version. Needs `gh auth login` by the user.
 - [x] F-20 Accounts: Supabase Auth email+password sign-in with a persistent session (refresh token renewed in the background). Supabase project now exists. Sign-out is in Settings (ACCOUNT group, shown when signed in).

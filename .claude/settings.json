@@ -28,7 +28,8 @@
     "GRADLE_USER_HOME": "D:\\Monet\\.tools\\gradle-home",
     "UV_CACHE_DIR": "D:\\Monet\\.tools\\uv-cache",
     "UV_PYTHON_INSTALL_DIR": "D:\\Monet\\.tools\\python",
-    "UV_LINK_MODE": "copy"
+    "UV_LINK_MODE": "copy",
+    "GH_CONFIG_DIR": "D:\\Monet\\.tools\\gh-config"
   },
   "hooks": {
     "PreToolUse": [
