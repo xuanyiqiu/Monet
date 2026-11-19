@@ -42,12 +42,12 @@ Legend: `[ ]` todo · `[~] (branch)` in progress · `[x]` done. Work top-down wi
 - [x] F-12 (done in "lens round 2", e7738af; emulator pass for rotation and lock-screen stop still to do) Lens robustness: latest-frame cache (no "could not capture" on a static screen), stop cleanly when Android ends the projection (lock screen, system chip), rotation, pill kept on screen, no bubble flicker on capture. AC: unit tests for the pure parts; emulator check incl. rotation and projection stop.
 - [x] F-13 (done in "lens round 2"; open: swipe handle on the band) Auto mode follows the screen: `FrameGate` (frame diff + ~300 ms settle) re-reads after a scroll and re-anchors on the first unread unit; chips are tappable (open the Detail sheet); a ⌄ handle advances the band. AC: `FrameGate` and re-anchor logic unit-tested; emulator scroll test.
 - [x] F-14a Install the on-device annotation cache (`CachingMonetApi` around the real API only) + unit tests. Spec `docs/tasks/F-14a.md`.
-- [ ] F-14b Detail sheet actions: Save to Notebook (needs F-15a), Report a bad translation via `sendFeedback` (API exists, unused), tap a token to hear it alone, second tap on the play button plays slow. AC: unit tests for the view-model logic; emulator check.
+- [x] F-14b Detail sheet actions: Save to Notebook (needs F-15a), Report a bad translation via `sendFeedback` (API exists, unused), tap a token to hear it alone, second tap on the play button plays slow. AC: unit tests for the view-model logic; emulator check.
 - [x] F-15a Wire `NotebookRepository` (exists, never constructed) into `AppContainer`; unit tests for the SM-2 scheduler, `searchNotebook` and the persistence round trip.
-- [ ] F-15b Notebook screen (list, search, delete) and a Home entry. AC: emulator check.
-- [ ] F-15c Daily review (5-10 cards) over `dueEntries`/`review`. AC: emulator check.
+- [x] F-15b Notebook screen (list, search, delete) and a Home entry. AC: emulator check.
+- [x] F-15c Daily review (5-10 cards) over `dueEntries`/`review`. AC: emulator check.
 - [x] F-16 Settings from PRODUCT §2.5: source language, lines per step 1/2/3/5/10/All, overlay opacity, chip text size, speech speed (Sonnet agent; unit-tested, not yet checked visually on the emulator).
-- [ ] F-17 Typography: downloadable fonts (IBM Plex Sans, Source Serif 4, Noto Serif SC) with system fallback. AC: screenshot showing the real faces.
+- [x] F-17 Typography: downloadable fonts (IBM Plex Sans, Source Serif 4, Noto Serif SC) with system fallback. AC: screenshot showing the real faces.
 - [x] F-18 Reader round 2 (Sonnet agent): reading position saved per document, long-press opens the Detail sheet, share-sheet upload of PDF/DOCX/TXT, Retry for FAILED documents (download + re-upload + delete, since the contract has no reprocess endpoint). Not exercised on a device yet.
 - [x] F-19a APK versioning: `versionName` from the latest `v*` git tag (`git describe`), `versionCode` = commit count, both overridable with `-Pmonet.versionName/-Pmonet.versionCode`, `printVersion` task. AC: spec checks in `docs/tasks/F-19a.md`; debug build green.
 - [x] F-19b Per-ABI release APKs named `monet-<versionName>-<abi>.apk` (plus universal) and Settings shows "Monet x (code)". AC: spec checks in `docs/tasks/F-19b.md`.
