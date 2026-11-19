@@ -49,6 +49,26 @@ class LocalBlobStore:
         self._path(key).unlink(missing_ok=True)
 
 
+def _is_not_found(response: httpx.Response) -> bool:
+    body = None
+    try:
+        parsed = response.json()
+    except ValueError:
+        parsed = None
+    if isinstance(parsed, dict):
+        body = parsed
+    if body is not None and body.get("code") == "NoSuchBucket":
+        return False
+    if response.status_code == 404:
+        return True
+    return (
+        response.status_code == 400
+        and body is not None
+        and "statusCode" in body
+        and str(body["statusCode"]) == "404"
+    )
+
+
 class SupabaseBlobStore:
     """BlobStore backed by the Supabase Storage REST API."""
 
@@ -92,17 +112,17 @@ class SupabaseBlobStore:
 
     async def get(self, key: str) -> bytes:
         response = await self._client().get(self._url(key), headers=self._headers())
-        if response.status_code == 404:
-            raise FileNotFoundError(key)
         if not response.is_success:
+            if _is_not_found(response):
+                raise FileNotFoundError(key)
             raise RuntimeError(f"storage download failed with status {response.status_code}")
         return response.content
 
     async def delete(self, key: str) -> None:
         response = await self._client().delete(self._url(key), headers=self._headers())
-        if response.status_code == 404:
-            return
         if not response.is_success:
+            if _is_not_found(response):
+                return
             raise RuntimeError(f"storage delete failed with status {response.status_code}")
 
     async def aclose(self) -> None:
