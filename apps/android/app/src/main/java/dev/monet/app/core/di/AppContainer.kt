@@ -5,10 +5,13 @@ import dev.monet.app.BuildConfig
 import dev.monet.app.core.auth.AuthRepository
 import dev.monet.app.core.auth.SessionStore
 import dev.monet.app.core.auth.SupabaseAuthApi
+import dev.monet.app.core.data.AnnotationCache
+import dev.monet.app.core.data.CachingMonetApi
 import dev.monet.app.core.network.FakeMonetApi
 import dev.monet.app.core.network.MonetApi
 import dev.monet.app.core.network.RemoteMonetApi
 import dev.monet.app.core.settings.SettingsRepository
+import java.io.File
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 
@@ -21,6 +24,8 @@ class AppContainer(context: Context) {
         store = SessionStore(context),
     )
 
+    private val annotations = AnnotationCache(File(context.cacheDir, "annotations"))
+
     /**
      * Delegates to fake or remote per call, so flipping the dev switch in Settings takes effect
      * immediately without recreating screens.
@@ -29,6 +34,7 @@ class AppContainer(context: Context) {
         settingsRepository = settingsRepository,
         auth = auth,
         fake = FakeMonetApi(),
+        cache = annotations,
     )
 }
 
@@ -36,8 +42,9 @@ private class SwitchingMonetApi(
     private val settingsRepository: SettingsRepository,
     private val auth: AuthRepository,
     private val fake: MonetApi,
+    private val cache: AnnotationCache,
 ) : MonetApi {
-    private var remote: Pair<String, RemoteMonetApi>? = null
+    private var remote: Pair<String, MonetApi>? = null
 
     private suspend fun target(): MonetApi {
         val s = settingsRepository.settings.first()
@@ -46,12 +53,15 @@ private class SwitchingMonetApi(
         if (cached != null && cached.first == s.apiBaseUrl) return cached.second
         // Both lambdas run on OkHttp threads, so blocking here is fine. The signed-in session wins;
         // the Settings token is the fallback for a local dev API that accepts `dev:` tokens.
-        val api = RemoteMonetApi(
-            baseUrl = s.apiBaseUrl,
-            token = {
-                runBlocking { auth.accessToken() ?: settingsRepository.settings.first().authToken }
-            },
-            renewToken = { runBlocking { auth.accessToken(force = true) } },
+        val api = CachingMonetApi(
+            RemoteMonetApi(
+                baseUrl = s.apiBaseUrl,
+                token = {
+                    runBlocking { auth.accessToken() ?: settingsRepository.settings.first().authToken }
+                },
+                renewToken = { runBlocking { auth.accessToken(force = true) } },
+            ),
+            cache,
         )
         remote = s.apiBaseUrl to api
         return api
