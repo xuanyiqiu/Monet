@@ -2,6 +2,8 @@ package dev.monet.app.core.settings
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import dev.monet.app.core.network.Lang
+import dev.monet.app.core.network.SourceLang
+import dev.monet.app.feature.lens.capture.LINES_ALL
 import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -30,7 +32,11 @@ class SettingsRepositoryTest {
         repo(file, first).apply {
             setTargetLang(Lang.ZH)
             setPinyinStyle(PinyinStyle.NUMBERED)
-            setLinesPerStep(4)
+            setLinesPerStep(5)
+            setSourceLang(SourceLang.ZH)
+            setOverlayOpacity(80)
+            setChipSize(ChipSize.SMALL)
+            setTtsSpeed(TtsSpeed.SLOW)
             setThemeMode(ThemeMode.DARK)
             setUseFakeApi(false)
             setApiBaseUrl("http://192.168.1.5:8000")
@@ -45,7 +51,11 @@ class SettingsRepositoryTest {
         second.cancel()
         assertEquals(Lang.ZH, s.targetLang)
         assertEquals(PinyinStyle.NUMBERED, s.pinyinStyle)
-        assertEquals(4, s.linesPerStep)
+        assertEquals(5, s.linesPerStep)
+        assertEquals(SourceLang.ZH, s.sourceLang)
+        assertEquals(80, s.overlayOpacity)
+        assertEquals(ChipSize.SMALL, s.chipSize)
+        assertEquals(TtsSpeed.SLOW, s.ttsSpeed)
         assertEquals(ThemeMode.DARK, s.themeMode)
         assertFalse(s.useFakeApi)
         assertEquals("http://192.168.1.5:8000", s.apiBaseUrl)
@@ -61,7 +71,21 @@ class SettingsRepositoryTest {
         r.setLinesPerStep(0)
         assertEquals(1, r.settings.first().linesPerStep)
         r.setLinesPerStep(42)
-        assertEquals(5, r.settings.first().linesPerStep)
+        assertEquals(10, r.settings.first().linesPerStep)
+        r.setLinesPerStep(LINES_ALL)
+        assertEquals(LINES_ALL, r.settings.first().linesPerStep)
         scope.cancel()
+    }
+
+    @Test
+    fun `opacity is snapped on write and defaults apply when unset`() = runBlocking {
+        val file = File(tmp.root, "opacity.preferences_pb")
+        val scope = CoroutineScope(Dispatchers.IO + Job())
+        val r = repo(file, scope)
+        assertEquals(SourceLang.AUTO, r.settings.first().sourceLang)
+        assertEquals(60, r.settings.first().overlayOpacity)
+        r.setOverlayOpacity(77)
+        assertEquals(80, r.settings.first().overlayOpacity)
+        scope.coroutineContext[Job]!!.cancelAndJoin()
     }
 }

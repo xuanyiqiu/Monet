@@ -11,6 +11,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -41,6 +42,7 @@ fun DetailSheet(text: String, onDismiss: () -> Unit) {
 
     val speaker = remember { Speaker(context) }
     DisposableEffect(speaker) { onDispose { speaker.shutdown() } }
+    LaunchedEffect(speaker) { container.settingsRepository.settings.collect { speaker.speed = it.ttsSpeed } }
 
     val actions = remember(text, state) { buildDetailActions(context, speaker, text, state, onRetry = viewModel::load) }
 

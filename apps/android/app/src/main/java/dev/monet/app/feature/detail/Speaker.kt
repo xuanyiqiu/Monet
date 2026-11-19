@@ -3,10 +3,14 @@ package dev.monet.app.feature.detail
 import android.content.Context
 import android.speech.tts.TextToSpeech
 import dev.monet.app.core.network.Lang
+import dev.monet.app.core.settings.TtsSpeed
+import dev.monet.app.core.settings.speechRate
 import java.util.Locale
 
 /** Thin wrapper over [TextToSpeech]; speaks in the text's own language, optionally slowed down. */
 class Speaker(context: Context) {
+    /** Updated from Settings; [speak] reads it each time. */
+    @Volatile var speed: TtsSpeed = TtsSpeed.NORMAL
     private var ready = false
     private val tts: TextToSpeech = TextToSpeech(context.applicationContext) { status ->
         ready = status == TextToSpeech.SUCCESS
@@ -17,7 +21,7 @@ class Speaker(context: Context) {
         if (!ready) return false
         val result = tts.setLanguage(lang.toLocale())
         if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) return false
-        tts.setSpeechRate(if (slow) 0.55f else 1.0f)
+        tts.setSpeechRate(speechRate(speed, slow))
         tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "monet-detail")
         return true
     }

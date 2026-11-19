@@ -134,8 +134,10 @@ class LensService : Service() {
         LensState.update { it.copy(running = true, mode = LensMode.AUTO, captureLost = false) }
         scope.launch {
             host.container.settingsRepository.settings.collect { settings ->
-                LensState.update { it.copy(linesPerStep = settings.linesPerStep) }
+                LensState.update { it.copy(linesPerStep = settings.linesPerStep, overlayOpacity = settings.overlayOpacity) }
                 reading.setLinesPerStep(settings.linesPerStep)
+                reading.setOverlayOpacity(settings.overlayOpacity)
+                reading.applyChipTextScale(settings.chipSize.scale)
             }
         }
     }

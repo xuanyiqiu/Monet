@@ -64,6 +64,7 @@ data class ReadingUiState(
     val session: ReadingSession,
     val styles: Map<String, ChipStyle>,
     val translations: Map<String, ChipText>,
+    val scrimAlpha: Float = 0.85f,
 )
 
 /** OCR boxes hug the glyphs; a few extra pixels let the chip fully cover ascenders, descenders and antialiasing. */
@@ -90,16 +91,16 @@ fun ReadingBand(state: ReadingUiState) {
             }
         }
         state.session.read.forEach { unit ->
-            state.styles[unit.id]?.let { ReadScrim(unit, it) }
+            state.styles[unit.id]?.let { ReadScrim(unit, it, state.scrimAlpha) }
         }
     }
 }
 
 /** Fades already-read text under its own page color over 200 ms. */
 @Composable
-private fun ReadScrim(unit: ReadingUnit, style: ChipStyle) {
+private fun ReadScrim(unit: ReadingUnit, style: ChipStyle, target: Float) {
     val alpha = remember(unit.id) { Animatable(0f) }
-    LaunchedEffect(unit.id) { alpha.animateTo(0.85f, tween(200)) }
+    LaunchedEffect(unit.id, target) { alpha.animateTo(target, tween(200)) }
     val density = LocalDensity.current
     with(density) {
         Box(

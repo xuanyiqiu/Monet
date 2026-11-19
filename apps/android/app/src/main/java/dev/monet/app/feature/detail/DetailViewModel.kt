@@ -52,7 +52,7 @@ class DetailController(
             _state.value = DetailUiState.Loading
             val s = settings.settings.first()
             _state.value = try {
-                DetailUiState.Ready(api.annotate(AnnotateRequest(text = text, targetLang = s.targetLang)), s.pinyinStyle)
+                DetailUiState.Ready(api.annotate(AnnotateRequest(text = text, sourceLang = s.sourceLang, targetLang = s.targetLang)), s.pinyinStyle)
             } catch (e: ApiException) {
                 DetailUiState.Failed(offline = e.isOffline, message = e.problem?.detail ?: e.problem?.title ?: "Something went wrong")
             }

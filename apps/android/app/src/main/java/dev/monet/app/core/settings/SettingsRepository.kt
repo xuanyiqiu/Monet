@@ -10,6 +10,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dev.monet.app.BuildConfig
 import dev.monet.app.core.network.Lang
+import dev.monet.app.core.network.SourceLang
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -20,7 +21,11 @@ enum class ThemeMode { SYSTEM, LIGHT, DARK }
 data class Settings(
     val targetLang: Lang = Lang.EN,
     val pinyinStyle: PinyinStyle = PinyinStyle.TONE_COLORS,
+    val sourceLang: SourceLang = SourceLang.AUTO,
     val linesPerStep: Int = 2,
+    val overlayOpacity: Int = DEFAULT_OPACITY_PERCENT,
+    val chipSize: ChipSize = ChipSize.NORMAL,
+    val ttsSpeed: TtsSpeed = TtsSpeed.NORMAL,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     /** Dev switch: use [dev.monet.app.core.network.FakeMonetApi] instead of the server. */
     val useFakeApi: Boolean = false,
@@ -38,7 +43,11 @@ internal fun Preferences.toSettings(): Settings {
     return Settings(
         targetLang = enumOrDefault(this[Keys.targetLang], d.targetLang),
         pinyinStyle = enumOrDefault(this[Keys.pinyinStyle], d.pinyinStyle),
-        linesPerStep = (this[Keys.linesPerStep] ?: d.linesPerStep).coerceIn(1, 5),
+        sourceLang = enumOrDefault(this[Keys.sourceLang], d.sourceLang),
+        linesPerStep = snapLines(this[Keys.linesPerStep] ?: d.linesPerStep),
+        overlayOpacity = snapOpacityPercent(this[Keys.overlayOpacity] ?: d.overlayOpacity),
+        chipSize = enumOrDefault(this[Keys.chipSize], d.chipSize),
+        ttsSpeed = enumOrDefault(this[Keys.ttsSpeed], d.ttsSpeed),
         themeMode = enumOrDefault(this[Keys.themeMode], d.themeMode),
         useFakeApi = this[Keys.useFakeApi] ?: d.useFakeApi,
         apiBaseUrl = this[Keys.apiBaseUrl] ?: d.apiBaseUrl,
@@ -55,6 +64,10 @@ private object Keys {
     val targetLang = stringPreferencesKey("target_lang")
     val pinyinStyle = stringPreferencesKey("pinyin_style")
     val linesPerStep = intPreferencesKey("lines_per_step")
+    val sourceLang = stringPreferencesKey("source_lang")
+    val overlayOpacity = intPreferencesKey("overlay_opacity")
+    val chipSize = stringPreferencesKey("chip_size")
+    val ttsSpeed = stringPreferencesKey("tts_speed")
     val themeMode = stringPreferencesKey("theme_mode")
     val useFakeApi = booleanPreferencesKey("use_fake_api")
     val apiBaseUrl = stringPreferencesKey("api_base_url")
@@ -72,7 +85,11 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
 
     suspend fun setTargetLang(value: Lang) = store.edit { it[Keys.targetLang] = value.name }
     suspend fun setPinyinStyle(value: PinyinStyle) = store.edit { it[Keys.pinyinStyle] = value.name }
-    suspend fun setLinesPerStep(value: Int) = store.edit { it[Keys.linesPerStep] = value.coerceIn(1, 5) }
+    suspend fun setLinesPerStep(value: Int) = store.edit { it[Keys.linesPerStep] = snapLines(value) }
+    suspend fun setSourceLang(value: SourceLang) = store.edit { it[Keys.sourceLang] = value.name }
+    suspend fun setOverlayOpacity(value: Int) = store.edit { it[Keys.overlayOpacity] = snapOpacityPercent(value) }
+    suspend fun setChipSize(value: ChipSize) = store.edit { it[Keys.chipSize] = value.name }
+    suspend fun setTtsSpeed(value: TtsSpeed) = store.edit { it[Keys.ttsSpeed] = value.name }
     suspend fun setThemeMode(value: ThemeMode) = store.edit { it[Keys.themeMode] = value.name }
     suspend fun setUseFakeApi(value: Boolean) = store.edit { it[Keys.useFakeApi] = value }
     suspend fun setApiBaseUrl(value: String) = store.edit { it[Keys.apiBaseUrl] = value }

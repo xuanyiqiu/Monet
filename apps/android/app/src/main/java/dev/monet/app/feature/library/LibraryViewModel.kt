@@ -68,11 +68,13 @@ class LibraryViewModel(
                     notify("Choose a PDF, DOCX or TXT file.")
                     return@launch
                 }
+                val prefs = settings.settings.first()
                 api.uploadDocument(
                     fileName = picked.name,
                     mimeType = mimeFor(kind),
                     bytes = picked.bytes,
-                    targetLang = settings.settings.first().targetLang,
+                    targetLang = prefs.targetLang,
+                    sourceLang = prefs.sourceLang,
                 )
                 refresh()
             } catch (e: FileTooLargeException) {
