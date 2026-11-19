@@ -52,5 +52,7 @@ Legend: `[ ]` todo · `[~] (branch)` in progress · `[x]` done. Work top-down wi
 - [~] (feat/f19c-release-signing) F-19c Release signing and publish: signing config read from a local keystore via `local.properties` (never committed), `scripts/release_android.ps1` (tag, build, sign, `apksigner verify`, checksum), GitHub Release notes. Needs `gh auth login` and a keystore created by the user. AC: signed APK verifies; upgrade-install over the previous version keeps the session.
 - [x] F-20 Accounts: Supabase Auth email+password sign-in with a persistent session (refresh token renewed in the background). Supabase project now exists. Sign-out is in Settings (ACCOUNT group, shown when signed in).
 
+- [~] (fix/f21-settings-test-race) F-21 Fix the timing race in `SettingsRepositoryTest` (fails on a fresh checkout: two DataStores on one file). AC: green on 4 runs in a row. Spec: `docs/tasks/F-21.md`.
+
 ## Later
 - Notebook + spaced repetition, accounts sync, offline pinyin, EPUB/images, scanned-PDF OCR.
