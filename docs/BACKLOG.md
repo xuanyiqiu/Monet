@@ -49,10 +49,11 @@ Legend: `[ ]` todo · `[~] (branch)` in progress · `[x]` done. Work top-down wi
 - [x] F-19a APK versioning: `versionName` from the latest `v*` git tag (`git describe`), `versionCode` = commit count, both overridable with `-Pmonet.versionName/-Pmonet.versionCode`, `printVersion` task. AC: spec checks in `docs/tasks/F-19a.md`; debug build green.
 - [x] F-19b Per-ABI release APKs named `monet-<versionName>-<abi>.apk` (plus universal) and Settings shows "Monet x (code)". AC: spec checks in `docs/tasks/F-19b.md`.
 - [ ] F-19d R8 + resource shrinking for release (keep rules for kotlinx.serialization, Retrofit, ML Kit). AC: release APK installs and runs the Lens on the emulator; size reported per ABI.
-- [~] (feat/f19c-release-signing) F-19c Release signing and publish: signing config read from a local keystore via `local.properties` (never committed), `scripts/release_android.ps1` (tag, build, sign, `apksigner verify`, checksum), GitHub Release notes. Needs `gh auth login` and a keystore created by the user. AC: signed APK verifies; upgrade-install over the previous version keeps the session.
+- [x] F-19c Release signing: signing config from a local keystore via `local.properties` (never committed), `scripts/release_android.ps1` (clean-tree guard, build, `apksigner verify`, `SHA256SUMS.txt`). Done; publishing is F-19e.
+- [ ] F-19e Publish: tag `v0.1.0`, GitHub Release with the signed APKs and checksums, upgrade-install check over the previous version. Needs `gh auth login` by the user.
 - [x] F-20 Accounts: Supabase Auth email+password sign-in with a persistent session (refresh token renewed in the background). Supabase project now exists. Sign-out is in Settings (ACCOUNT group, shown when signed in).
 
-- [~] (fix/f21-settings-test-race) F-21 Fix the timing race in `SettingsRepositoryTest` (fails on a fresh checkout: two DataStores on one file). AC: green on 4 runs in a row. Spec: `docs/tasks/F-21.md`.
+- [x] F-21 Fix the timing race in `SettingsRepositoryTest` (fails on a fresh checkout: two DataStores on one file). AC: green on 4 runs in a row. Spec: `docs/tasks/F-21.md`.
 
 ## Later
 - Notebook + spaced repetition, accounts sync, offline pinyin, EPUB/images, scanned-PDF OCR.
