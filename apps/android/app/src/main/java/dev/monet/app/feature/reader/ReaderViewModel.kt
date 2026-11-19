@@ -4,6 +4,8 @@ import android.graphics.Bitmap
 import android.util.LruCache
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.monet.app.core.data.ReadingPosition
+import dev.monet.app.core.data.ReadingPositionStore
 import dev.monet.app.core.network.ApiException
 import dev.monet.app.core.network.Document
 import dev.monet.app.core.network.DocumentKind
@@ -36,15 +38,18 @@ data class ReaderUiState(
     val pdfReady: Boolean = false,
     val pages: Map<Int, PageLoad> = emptyMap(),
     val selected: SelectedLine? = null,
+    /** Where to resume; read once when the screen opens. */
+    val restore: ReadingPosition? = null,
 )
 
 class ReaderViewModel(
     private val api: MonetApi,
     private val documentId: String,
     private val cacheDir: File,
+    private val positions: ReadingPositionStore,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(ReaderUiState())
+    private val _state = MutableStateFlow(ReaderUiState(restore = positions.get(documentId)))
     val state: StateFlow<ReaderUiState> = _state.asStateFlow()
 
     private var pdf: PdfPages? = null
@@ -128,6 +133,8 @@ class ReaderViewModel(
         val renderer = pdf ?: return null
         return runCatching { renderer.render(index, widthPx) }.getOrNull()?.also { bitmaps.put(index, it) }
     }
+
+    fun savePosition(index: Int, offset: Int) = positions.save(documentId, ReadingPosition(index, offset))
 
     fun select(pageIndex: Int, line: DocumentLine?) =
         _state.update { it.copy(selected = line?.let { l -> SelectedLine(pageIndex, l) }) }

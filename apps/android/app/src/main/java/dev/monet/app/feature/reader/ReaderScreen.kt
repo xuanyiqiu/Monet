@@ -5,7 +5,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,6 +21,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.FlowPreview
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
@@ -70,6 +76,7 @@ class ReaderActions(
     val onRetryPage: (Int) -> Unit,
     val onSelect: (pageIndex: Int, line: DocumentLine?) -> Unit,
     val onExplain: (String) -> Unit,
+    val onPosition: (index: Int, offset: Int) -> Unit = { _, _ -> },
 )
 
 @Composable
@@ -79,7 +86,7 @@ fun ReaderRoute(documentId: String, onBack: () -> Unit, onExplain: (String) -> U
     val viewModel: ReaderViewModel = viewModel(
         key = "reader:$documentId",
         factory = viewModelFactory {
-            initializer { ReaderViewModel(container.api, documentId, context.applicationContext.cacheDir) }
+            initializer { ReaderViewModel(container.api, documentId, context.applicationContext.cacheDir, container.readingPositions) }
         },
     )
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -92,6 +99,7 @@ fun ReaderRoute(documentId: String, onBack: () -> Unit, onExplain: (String) -> U
             onRetryPage = viewModel::retryPage,
             onSelect = viewModel::select,
             onExplain = onExplain,
+            onPosition = viewModel::savePosition,
         ),
     )
 }
@@ -150,6 +158,19 @@ private fun Notice(text: String) {
     )
 }
 
+/** A list state that starts at the remembered position and reports changes (debounced) while reading. */
+@OptIn(FlowPreview::class)
+@Composable
+private fun rememberResumingListState(state: ReaderUiState, actions: ReaderActions): LazyListState {
+    val listState = rememberLazyListState(state.restore?.index ?: 0, state.restore?.offset ?: 0)
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
+            .debounce(400)
+            .collect { (i, o) -> actions.onPosition(i, o) }
+    }
+    return listState
+}
+
 // ---- PDF -----------------------------------------------------------------------------------
 
 @Composable
@@ -162,7 +183,7 @@ private fun PdfPageList(
     val density = LocalDensity.current
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val widthPx = with(density) { maxWidth.roundToPx() }
-        LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(Spacing.x2)) {
+        LazyColumn(Modifier.fillMaxSize(), state = rememberResumingListState(state, actions), verticalArrangement = Arrangement.spacedBy(Spacing.x2)) {
             items(doc.pageCount ?: 1, key = { it }) { index ->
                 PdfPageItem(index, widthPx, state.pages[index], state.selected?.takeIf { it.pageIndex == index }?.line, bitmapFor, actions)
             }
@@ -195,10 +216,16 @@ private fun PdfPageItem(
             .background(c.surface)
             .semantics { contentDescription = "Page ${index + 1}" }
             .pointerInput(page) {
-                detectTapGestures { p ->
-                    val hit = page?.let { hitLine(it, p.x, p.y, size.width.toFloat(), size.height.toFloat(), slopPx = 8.dp.toPx()) }
-                    actions.onSelect(index, hit)
-                }
+                detectTapGestures(
+                    onLongPress = { p ->
+                        page?.let { longPressText(it, p.x, p.y, size.width.toFloat(), size.height.toFloat(), slopPx = 8.dp.toPx()) }
+                            ?.let(actions.onExplain)
+                    },
+                    onTap = { p ->
+                        val hit = page?.let { hitLine(it, p.x, p.y, size.width.toFloat(), size.height.toFloat(), slopPx = 8.dp.toPx()) }
+                        actions.onSelect(index, hit)
+                    },
+                )
             },
     ) {
         bitmap?.let {
@@ -228,6 +255,7 @@ private fun PdfPageItem(
 private fun ReflowPages(doc: Document, state: ReaderUiState, actions: ReaderActions) {
     LazyColumn(
         Modifier.fillMaxSize().padding(horizontal = Spacing.gutter),
+        state = rememberResumingListState(state, actions),
         verticalArrangement = Arrangement.spacedBy(Spacing.x6),
     ) {
         item { Box(Modifier.height(Spacing.x2)) }
@@ -238,6 +266,7 @@ private fun ReflowPages(doc: Document, state: ReaderUiState, actions: ReaderActi
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ReflowPage(index: Int, load: PageLoad?, selected: DocumentLine?, actions: ReaderActions) {
     val c = Monet.colors
@@ -253,7 +282,11 @@ private fun ReflowPage(index: Int, load: PageLoad?, selected: DocumentLine?, act
                             Modifier
                                 .fillMaxWidth()
                                 .background(if (isSelected) c.sealSoft else androidx.compose.ui.graphics.Color.Transparent, RoundedCornerShape(Radius.xs))
-                                .clickable { actions.onSelect(index, if (isSelected) null else line) }
+                                .combinedClickable(
+                                    onLongClickLabel = "Explain this line",
+                                    onLongClick = { actions.onExplain(line.text) },
+                                    onClick = { actions.onSelect(index, if (isSelected) null else line) },
+                                )
                                 .padding(vertical = Spacing.x1),
                         ) {
                             Text(line.text, style = t.reading, color = c.ink)

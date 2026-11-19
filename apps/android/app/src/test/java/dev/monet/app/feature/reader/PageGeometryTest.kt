@@ -80,4 +80,13 @@ class PageGeometryTest {
         assertEquals(listOf(1, 2, 3), pagesToPrefetch(2, 5))
         assertEquals(listOf(0), pagesToPrefetch(0, 1))
     }
+
+    @Test
+    fun `long press returns the text of the line under the finger`() {
+        val a = line("a", listOf(0.1f, 0.10f, 0.9f, 0.15f))
+        val b = line("b", listOf(0.1f, 0.30f, 0.9f, 0.35f))
+        val p = page(listOf(DocumentBlock("b", lines = listOf(a, b))))
+        assertEquals("text b", longPressText(p, 500f, 320f, 1000f, 1000f))
+        assertNull(longPressText(p, 500f, 700f, 1000f, 1000f))
+    }
 }

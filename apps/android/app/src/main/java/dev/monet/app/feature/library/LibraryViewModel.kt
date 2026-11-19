@@ -58,29 +58,19 @@ class LibraryViewModel(
         viewModelScope.launch {
             _state.update { it.copy(uploading = true) }
             try {
-                val picked = withContext(Dispatchers.IO) { readPickedFile(resolver, uri) }
-                if (picked == null) {
-                    notify("Could not open that file.")
-                    return@launch
-                }
-                val kind = kindFromFile(picked.name, picked.mime)
-                if (kind == null) {
-                    notify("Choose a PDF, DOCX or TXT file.")
-                    return@launch
-                }
-                val prefs = settings.settings.first()
-                api.uploadDocument(
-                    fileName = picked.name,
-                    mimeType = mimeFor(kind),
-                    bytes = picked.bytes,
-                    targetLang = prefs.targetLang,
-                    sourceLang = prefs.sourceLang,
-                )
-                refresh()
-            } catch (e: FileTooLargeException) {
-                notify(e.message ?: "The file is too large.")
-            } catch (e: ApiException) {
-                notify(if (e.isOffline) "Can't reach the server." else e.problem?.detail ?: e.problem?.title ?: "Upload failed.")
+                uploadFromUri(api, settings, resolver, uri)?.let { notify(it) } ?: refresh()
+            } finally {
+                _state.update { it.copy(uploading = false) }
+            }
+        }
+    }
+
+    fun retry(doc: Document) {
+        if (!canRetry(doc)) return
+        viewModelScope.launch {
+            _state.update { it.copy(uploading = true) }
+            try {
+                retryDocument(api, doc)?.let { notify(it) } ?: refresh()
             } finally {
                 _state.update { it.copy(uploading = false) }
             }
