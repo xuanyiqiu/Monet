@@ -211,7 +211,14 @@ class MainActivity : ComponentActivity() {
             }
             Screen.Settings -> SettingsScreen(
                 settings = settings,
+                signedIn = container.auth.state
+                    .collectAsStateWithLifecycle(initialValue = AuthState.Loading).value == AuthState.SignedIn,
                 actions = SettingsActions(
+                    onSignOut = {
+                        // Back to Home first, so the next sign-in does not land inside Settings.
+                        viewModel.open(Screen.Home)
+                        lifecycleScope.launch { container.auth.signOut() }
+                    },
                     onBack = { viewModel.back() },
                     onTargetLang = { settingsViewModel.setTargetLang(it) },
                     onPinyinStyle = { settingsViewModel.setPinyinStyle(it) },

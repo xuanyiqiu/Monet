@@ -61,10 +61,16 @@ class SettingsActions(
     val onApiBaseUrl: (String) -> Unit,
     val onAuthToken: (String) -> Unit,
     val onReplayIntro: () -> Unit,
+    val onSignOut: () -> Unit,
 )
 
 @Composable
-fun SettingsScreen(settings: Settings, actions: SettingsActions, modifier: Modifier = Modifier) {
+fun SettingsScreen(
+    settings: Settings,
+    actions: SettingsActions,
+    modifier: Modifier = Modifier,
+    signedIn: Boolean = false,
+) {
     val c = Monet.colors
     val t = Monet.type
     Column(
@@ -111,6 +117,15 @@ fun SettingsScreen(settings: Settings, actions: SettingsActions, modifier: Modif
                 selected = settings.themeMode,
                 onSelect = actions.onThemeMode,
             )
+        }
+
+        if (signedIn) {
+            HorizontalDivider(color = c.hairline)
+            Group("ACCOUNT") {
+                TextButton(onClick = actions.onSignOut) {
+                    Text("Sign out", style = t.label, color = c.seal)
+                }
+            }
         }
 
         HorizontalDivider(color = c.hairline)
@@ -220,7 +235,7 @@ private fun CommitField(label: String, value: String, onCommit: (String) -> Unit
     )
 }
 
-private val previewActions = SettingsActions({}, {}, {}, {}, {}, {}, {}, {}, {})
+private val previewActions = SettingsActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {})
 
 @Preview(name = "Settings light", showBackground = true, widthDp = 360, heightDp = 780)
 @Composable

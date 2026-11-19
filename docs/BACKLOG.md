@@ -49,7 +49,7 @@ Legend: `[ ]` todo · `[~] (branch)` in progress · `[x]` done. Work top-down wi
 - [x] F-19a APK versioning: `versionName` from the latest `v*` git tag (`git describe`), `versionCode` = commit count, both overridable with `-Pmonet.versionName/-Pmonet.versionCode`, `printVersion` task. AC: spec checks in `docs/tasks/F-19a.md`; debug build green.
 - [ ] F-19b Release build: R8 + resource shrinking (keep rules for kotlinx.serialization, Retrofit, ML Kit), per-ABI APKs named `monet-<versionName>-<abi>.apk`, Settings shows "Version x (code)". AC: release APK installs and runs the Lens on the emulator; size reported per ABI.
 - [ ] F-19c Release signing and publish: signing config read from a local keystore via `local.properties` (never committed), `scripts/release_android.ps1` (tag, build, sign, `apksigner verify`, checksum), GitHub Release notes. Needs `gh auth login` and a keystore created by the user. AC: signed APK verifies; upgrade-install over the previous version keeps the session.
-- [~] (feat/android-auth) F-20 Accounts: Supabase Auth email+password sign-in with a persistent session (refresh token renewed in the background). Supabase project now exists. Pending: sign-out in Settings.
+- [x] F-20 Accounts: Supabase Auth email+password sign-in with a persistent session (refresh token renewed in the background). Supabase project now exists. Sign-out is in Settings (ACCOUNT group, shown when signed in).
 
 ## Later
 - Notebook + spaced repetition, accounts sync, offline pinyin, EPUB/images, scanned-PDF OCR.
