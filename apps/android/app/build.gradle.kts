@@ -1,8 +1,15 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+}
+
+// Kept out of git: apps/android/local.properties (key `monet.supabasePublishableKey`).
+val localProps = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
 }
 
 android {
@@ -16,6 +23,14 @@ android {
         versionCode = 1
         versionName = "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Production backend. Both URLs are public; the publishable key only identifies the project.
+        buildConfigField("String", "API_BASE_URL", "\"https://monet-4uvusyivrq-ew.a.run.app\"")
+        buildConfigField("String", "SUPABASE_URL", "\"https://enjtszhyaojcnqeriule.supabase.co\"")
+        buildConfigField(
+            "String",
+            "SUPABASE_PUBLISHABLE_KEY",
+            "\"${localProps.getProperty("monet.supabasePublishableKey", "")}\"",
+        )
     }
 
     buildTypes {
@@ -32,6 +47,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     lint {
         abortOnError = true
