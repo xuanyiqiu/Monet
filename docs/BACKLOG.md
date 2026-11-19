@@ -41,9 +41,9 @@ Legend: `[ ]` todo · `[~] (branch)` in progress · `[x]` done. Work top-down wi
 ### Android round 2 (hardening, missing spec features, release)
 - [x] F-12 (done in "lens round 2", e7738af; emulator pass for rotation and lock-screen stop still to do) Lens robustness: latest-frame cache (no "could not capture" on a static screen), stop cleanly when Android ends the projection (lock screen, system chip), rotation, pill kept on screen, no bubble flicker on capture. AC: unit tests for the pure parts; emulator check incl. rotation and projection stop.
 - [x] F-13 (done in "lens round 2"; open: swipe handle on the band) Auto mode follows the screen: `FrameGate` (frame diff + ~300 ms settle) re-reads after a scroll and re-anchors on the first unread unit; chips are tappable (open the Detail sheet); a ⌄ handle advances the band. AC: `FrameGate` and re-anchor logic unit-tested; emulator scroll test.
-- [~] (feat/f14a-annotation-cache) F-14a Install the on-device annotation cache (`CachingMonetApi` around the real API only) + unit tests. Spec `docs/tasks/F-14a.md`.
+- [x] F-14a Install the on-device annotation cache (`CachingMonetApi` around the real API only) + unit tests. Spec `docs/tasks/F-14a.md`.
 - [ ] F-14b Detail sheet actions: Save to Notebook (needs F-15a), Report a bad translation via `sendFeedback` (API exists, unused), tap a token to hear it alone, second tap on the play button plays slow. AC: unit tests for the view-model logic; emulator check.
-- [ ] F-15a Wire `NotebookRepository` (exists, never constructed) into `AppContainer`; unit tests for the SM-2 scheduler, `searchNotebook` and the persistence round trip.
+- [~] (feat/f15a-notebook-core) F-15a Wire `NotebookRepository` (exists, never constructed) into `AppContainer`; unit tests for the SM-2 scheduler, `searchNotebook` and the persistence round trip.
 - [ ] F-15b Notebook screen (list, search, delete) and a Home entry. AC: emulator check.
 - [ ] F-15c Daily review (5-10 cards) over `dueEntries`/`review`. AC: emulator check.
 - [ ] F-16 Settings from PRODUCT §2.5 still missing: source language, lines per step options 1/2/3/5/10/All (today 1-5), overlay opacity, chip text size (`applyChipTextScale` exists, never called), TTS speed (hard-coded in `Speaker.kt`). AC: persisted + applied; unit tests.
