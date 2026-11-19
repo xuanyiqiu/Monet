@@ -14,7 +14,7 @@ param(
     [switch]$Remove
 )
 $ErrorActionPreference = "Stop"
-$repo = Split-Path $PSScriptRoot -Parent
+$repo = Split-Path (git -C $PSScriptRoot rev-parse --path-format=absolute --git-common-dir) -Parent
 $dir = Join-Path $repo ".claude\worktrees\$Name"
 
 function Remove-Junction([string]$path) {
