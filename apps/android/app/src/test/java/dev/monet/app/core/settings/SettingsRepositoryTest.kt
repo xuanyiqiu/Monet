@@ -7,6 +7,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -37,7 +38,7 @@ class SettingsRepositoryTest {
             setOnboardingDone(true)
             setCaptureExplained(true)
         }
-        first.cancel()
+        first.coroutineContext[Job]!!.cancelAndJoin()
 
         val second = CoroutineScope(Dispatchers.IO + Job())
         val s = repo(file, second).settings.first()
